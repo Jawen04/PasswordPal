@@ -24,13 +24,6 @@ function Content() {
         <div className='w-full max-w-3xl px-4 ml-10 mr-10'>
             <TitleAndBtn title={"Passwords"} message={"Manage all your stored passwords"}/>
             <PasswordsCard />
-            <btn
-                className='w-50 h-50 bg-black text-xl text-white'
-                onClick = {() => getAllStoredLogins({username: "InstaTest"})}
-            >
-
-            HELLO
-            </btn>
         </div>
     )
 }

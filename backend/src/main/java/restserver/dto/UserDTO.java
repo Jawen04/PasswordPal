@@ -4,11 +4,8 @@ public class UserDTO {
     private String username;
     private String password;
 
-<<<<<<< HEAD
-=======
 
 
->>>>>>> master
     // No-args constructor (important for JSON deserialization)
     public UserDTO() {}
 
