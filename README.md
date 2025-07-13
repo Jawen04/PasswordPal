@@ -10,7 +10,7 @@ A traditional password manager that lets the user:
 
 ## Usage
 
-The program contains three parts: 
+The program contains of three parts: 
 1. The frontend, written in Javascript react
 2. A backend server, using java and the springboot framework for managing requests to the server
 3. A database managed by MySQL
@@ -29,14 +29,17 @@ docker compose build
 4. Start the application (in detached mode) by typing 
 ```bash 
 docker compose up -d
+```
 
-Optional:
+## Optional:
 - view running containers: 
 ```bash 
 docker compose ps
+```
 - check logs: 
 ```bash 
 docker compose logs -f
+```
 - for more information on what you can do with Docker commands, visit Docker docs: 'https://docs.docker.com/reference/cli/docker/'
 
 The frontend application is now visible at 'http://localhost'
@@ -47,7 +50,7 @@ The Backend application (although not much info) is visible at 'http://localhost
 ### Starting the database 
 Make sure you have MySQL installed on your machine and run the following commands:
 
-```sh
+```bash
 mysql start
 mysql -u root -p                            # login as root, enter root password
 CREATE DATABASE adminUsersDB                # Create the database 
@@ -64,7 +67,10 @@ CREATE TABLE users (                        # Create the table where credentials
 # Starting the backend server
 
 1. CD to the directory called 'backend' 
-2. run `./gradlew run` 
+2. run 
+```bash 
+./gradlew run 
+```
 
 
 ### Starting the frontend server
@@ -74,10 +80,12 @@ The frontend is using the NodeJS runtime environment so make sure you have NodeJ
 2. First install all dependencies
 ```bash 
 npm install
+```
 2. then run to start the live server
 ```bash 
 npm start
-3. the application is now visible on the URL: "http://localhost:5173"
+```
+3. the application is now visible on the URL: 'http://localhost:5173'
 
 
 ## Contributing
@@ -92,15 +100,17 @@ If you have an idea, bug fix, improvement, or new feature you'd like to add, fee
 2. **Clone** your fork to your local machine:
    ```bash
    git clone https://github.com/your-username/repo-name.git
+   ```
 3. Create a new branch for your feature or bug fix:
 ```bash 
 git checkout -b feature/your-feature-name
-
+```
 4. Make your changes and commit them with clear messages:
 ```bash 
 git commit -m "Add feature XYZ"
-
+```
 5. Push your changes to your fork:
 ```bash 
 git push origin feature/your-feature-name
+```
 6. Open a Pull Request on the main repository and describe your changes.
