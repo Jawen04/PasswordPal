@@ -16,7 +16,7 @@ The program contains of three parts:
 3. A database managed by MySQL
 
 
-# Starting the fullstack application
+# Starting the Fullstack Application
 
 ## Using Docker 
 If you have Docker installed on your machine you can start the application easily with these steps:
@@ -32,7 +32,7 @@ docker compose build
 docker compose up -d
 ```
 
-### ptional:
+### =ptional:
 - view running containers: 
 ```bash 
 docker compose ps
@@ -78,15 +78,15 @@ CREATE TABLE users (                        # Create the table where credentials
 The frontend is using the NodeJS runtime environment so make sure you have NodeJS installed 
 
 1. CD to the directory called frontend
-2. First install all dependencies
+2. First install all dependencies:
 ```bash 
 npm install
 ```
-2. then run to start the live server
+3. then start the live server:
 ```bash 
 npm start
 ```
-3. the application is now visible on the URL: 'http://localhost:5173'
+4. the application is now visible on the URL: 'http://localhost:5173'
 
 
 # Cleaning Docker
@@ -116,7 +116,7 @@ docker container prune
 ## 3. Remove Unused/Dangling images
 
 ```bash 
-docker image prune # Removes danling (untagged) images, add a to remve all unused images
+docker image prune # Removes danling (untagged) images, add -a to remve all unused images
 ```
 
 ## 4. Remove Unused Networks
