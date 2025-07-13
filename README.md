@@ -1,5 +1,11 @@
 # An easy password manager
 
+## Description
+A traditional password manager that lets the user:
+- Generate new random passwords, with tweaks for security and comfort
+- Store and manage passwords for different services
+- Check overall security score for passwords
+- Change profile settings
 
 
 ## Usage
@@ -16,13 +22,22 @@ The program contains three parts:
 If you have Docker installed on your machine you can start the application easily with these steps:
 
 1. cd to the project's root directory
-2. Make sure you have no actively running containers that can potentially block ports by running the command, for this see the section 'cleaning docker'
-3. Build the docker images by running `docker compose build`
-4. Start the application (in detached mode) by typing `docker compose up -d`
+2. Make sure you have no actively running containers that can potentially block ports by running the command in section 'cleaning docker'
+3. Build the docker images by running 
+```bash 
+docker compose build
+4. Start the application (in detached mode) by typing 
+```bash 
+docker compose up -d
 
 Optional:
-- view running containers: `docker compose ps`
-- check logs: `docker compose logs -f`
+- view running containers: 
+```bash 
+docker compose ps
+- check logs: 
+```bash 
+docker compose logs -f
+- for more information on what you can do with Docker commands, visit Docker docs: 'https://docs.docker.com/reference/cli/docker/'
 
 The frontend application is now visible at 'http://localhost'
 The Backend application (although not much info) is visible at 'http://localhost:8080'
@@ -56,50 +71,36 @@ CREATE TABLE users (                        # Create the table where credentials
 The frontend is using the NodeJS runtime environment so make sure you have NodeJS installed 
 
 1. CD to the directory called frontend
-2. run `npm start`
+2. First install all dependencies
+```bash 
+npm install
+2. then run to start the live server
+```bash 
+npm start
 3. the application is now visible on the URL: "http://localhost:5173"
 
 
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
 ## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+Contributions are welcome and appreciated!
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+If you have an idea, bug fix, improvement, or new feature you'd like to add, feel free to get involved.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+### How to Contribute
 
-## License
-For open source projects, say how it is licensed.
+1. **Fork** the repository.
+2. **Clone** your fork to your local machine:
+   ```bash
+   git clone https://github.com/your-username/repo-name.git
+3. Create a new branch for your feature or bug fix:
+```bash 
+git checkout -b feature/your-feature-name
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+4. Make your changes and commit them with clear messages:
+```bash 
+git commit -m "Add feature XYZ"
+
+5. Push your changes to your fork:
+```bash 
+git push origin feature/your-feature-name
+6. Open a Pull Request on the main repository and describe your changes.
