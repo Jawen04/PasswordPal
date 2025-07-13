@@ -26,12 +26,13 @@ If you have Docker installed on your machine you can start the application easil
 3. Build the docker images by running 
 ```bash 
 docker compose build
+```
 4. Start the application (in detached mode) by typing 
 ```bash 
 docker compose up -d
 ```
 
-## Optional:
+### ptional:
 - view running containers: 
 ```bash 
 docker compose ps
@@ -64,7 +65,7 @@ CREATE TABLE users (                        # Create the table where credentials
 
 ```
 
-# Starting the backend server
+### Starting the backend server
 
 1. CD to the directory called 'backend' 
 2. run 
@@ -88,13 +89,53 @@ npm start
 3. the application is now visible on the URL: 'http://localhost:5173'
 
 
-## Contributing
+# Cleaning Docker
+
+A quick reference for cleaning up unused Docker resources to save space and keep your system clean.
+
+
+## Full Docker Cleanup
+
+ Use with caution! This is effectively a full Docker cleanup.
+```bash 
+docker system prune -a --volumes
+```
+
+## 1. Remove All Unused Data
+
+```bash
+docker system prune # Add -a to remove unused images
+docker system prune --volumes # Warning: This deletes all unused containers, networks, images, and optionally volumes. Make sure you know what will be removed.
+```
+
+## 2. Remove Stopped Containers
+```bash
+docker container prune
+```
+
+## 3. Remove Unused/Dangling images
+
+```bash 
+docker image prune # Removes danling (untagged) images, add a to remve all unused images
+```
+
+## 4. Remove Unused Networks
+```bash 
+docker network prune
+```
+
+## 5. Remove Unused Volumes
+```bash 
+docker volume prune
+```
+
+# Contributing
 
 Contributions are welcome and appreciated!
 
 If you have an idea, bug fix, improvement, or new feature you'd like to add, feel free to get involved.
 
-### How to Contribute
+## How to Contribute
 
 1. **Fork** the repository.
 2. **Clone** your fork to your local machine:
