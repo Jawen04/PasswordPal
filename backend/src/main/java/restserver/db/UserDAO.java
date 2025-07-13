@@ -6,7 +6,9 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Repository
@@ -51,6 +53,7 @@ public class UserDAO {
     }
 
     public boolean addStoredLogin(String ownerUsername, String serviceName, String loginUsername, String loginPassword) {
+        System.out.println("Adding stored login for user: " + ownerUsername + ", service: " + serviceName + ", username: " + loginUsername);
         Integer userId = getUserIdByUsername(ownerUsername);
 
         if(userId == null) {
@@ -75,12 +78,46 @@ public class UserDAO {
             System.err.println("Error adding stored login: " + e.getMessage());
             return false;
         }
-
-        
-
-
-
     }
+
+
+    public List<Map<String, String>> getStoredLogins(String username) {
+        List<Map<String, String>> storedLogins = new ArrayList<>();
+        Integer userId = getUserIdByUsername(username);
+
+        if (userId == null) {
+            System.out.println("User not found: " + username);
+            return storedLogins;
+        }
+
+        String sql = "SELECT service_name, login_username, login_password FROM user_accounts WHERE user_id = ?";
+
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, String> loginEntry = new HashMap<>();
+                    loginEntry.put("service", rs.getString("service_name"));
+                    loginEntry.put("username", rs.getString("login_username"));
+                    loginEntry.put("password", rs.getString("login_password")); // plaintext for now
+                    storedLogins.add(loginEntry);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving stored logins: " + e.getMessage());
+        }
+
+        return storedLogins;
+    }
+
+
+
+
+
+
+
     public boolean removeUser(String username) {
         if ("admin".equals(username)) {
             System.out.println("Cannot delete admin user.");

@@ -9,19 +9,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import org.springframework.web.bind.annotation.RestController;
-import restserver.service.UserService;
+import restserver.dto.ServiceLoginDTO;
 import restserver.dto.UserDTO;
 
 import restserver.db.UserDAO;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
 
-  @Autowired
-  private UserService userService;
   @Autowired
   private UserDAO SQLservice;
 
@@ -67,4 +66,30 @@ public class UserController {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
   }
+
+  @PostMapping("/addNewLogin")
+  public ResponseEntity<Map<String, String>> addNewLogin(@RequestBody ServiceLoginDTO serviceLoginDTO) {
+    Map<String, String> response = new HashMap<>();
+
+    if(SQLservice.addStoredLogin(serviceLoginDTO.getOwnerUsername(), serviceLoginDTO.getServiceName(), serviceLoginDTO.getServiceUsername(), serviceLoginDTO.getServicePassword())) {
+      System.out.println("New service login added for user: " + serviceLoginDTO.getOwnerUsername() + ", service: " + serviceLoginDTO.getServiceName());
+      response.put("status", "New service login added successfully");
+      return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    } else {
+      System.out.println("Failed to add new service login for user: " + serviceLoginDTO.getOwnerUsername() + ", service: " + serviceLoginDTO.getServiceName());
+      response.put("status", "Failed to add new service login");
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+  }
+
+  @PostMapping("/getAllLogins")
+  public List<Map<String,String>> getAllLogins(@RequestBody UserDTO userDTO) {
+    System.out.println("Fetching all logins for user: " + userDTO.getUsername());  
+    return SQLservice.getStoredLogins(userDTO.getUsername());
+  }
 }
+
+
+
+
+  
