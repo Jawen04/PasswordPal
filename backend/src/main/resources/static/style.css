@@ -1,0 +1,68 @@
+/* General Table Styling */
+.table-container {
+    width: 100%;
+    overflow-x: auto; /* Ensures responsiveness */
+}
+
+button {
+    font-size: 24px;
+    color: white;
+    background-color:#0073e6;
+    border-radius: 12px;
+    box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+}
+
+/* Table Header */
+th {
+    background-color: #0073e6;
+    color: white;
+    text-align: left;
+    padding: 12px;
+    border: 1px solid #ddd;
+}
+
+/* Table Body */
+td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    vertical-align: top;
+}
+
+/* Alternating Row Colors */
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Hover Effect */
+tr:hover {
+    background-color: #eef5ff;
+}
+
+/* Styling the Lists inside Table Cells */
+td ul {
+    list-style-type: none; /* Remove default bullets */
+    padding: 0;
+    margin: 0;
+}
+
+td ul li {
+    padding: 4px 0;
+    position: relative;
+    padding-left: 20px;
+}
+
+/* Custom Bullet Style */
+td ul li::before {
+    content: "•"; /* Unicode bullet */
+    color: #0073e6;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}
