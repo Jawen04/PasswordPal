@@ -1,4 +1,5 @@
 # An easy password manager
+> 🚧 **This project is currently under active development.** Features may change, and the project may not be stable yet.
 
 ## Description
 A traditional password manager that lets the user:
@@ -7,7 +8,6 @@ A traditional password manager that lets the user:
 - Check overall security score for passwords
 - Change profile settings
 
-> 🚧 **This project is currently under active development.** Features may change, and the project may not be stable yet.
 
 
 ## Usage
