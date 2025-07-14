@@ -7,6 +7,8 @@ A traditional password manager that lets the user:
 - Check overall security score for passwords
 - Change profile settings
 
+> 🚧 **This project is currently under active development.** Features may change, and the project may not be stable yet.
+
 
 ## Usage
 
@@ -86,12 +88,12 @@ npm install
 ```bash 
 npm start
 ```
-4. the application is now visible on the URL: 'http://localhost:5173'
+4. the application is now visible on the URL: http://localhost:5173
 
 
 # Cleaning Docker
 
-A quick reference for cleaning up unused Docker resources to save space and keep your system clean.
+A quick reference for cleaning up unused Docker resources.
 
 
 ## Full Docker Cleanup
