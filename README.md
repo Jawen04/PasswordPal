@@ -32,7 +32,7 @@ docker compose build
 docker compose up -d
 ```
 
-### =ptional:
+### Optional:
 - view running containers: 
 ```bash 
 docker compose ps
@@ -41,10 +41,10 @@ docker compose ps
 ```bash 
 docker compose logs -f
 ```
-- for more information on what you can do with Docker commands, visit Docker docs: 'https://docs.docker.com/reference/cli/docker/'
+- for more information on what you can do with Docker commands, visit Docker docs: https://docs.docker.com/reference/cli/docker/
 
-The frontend application is now visible at 'http://localhost'
-The Backend application (although not much info) is visible at 'http://localhost:8080'
+The frontend application is now visible at http://localhost
+The Backend application (although not much info) is visible at http://localhost:8080
 
 
 ## Starting everything manually (tidious)
@@ -139,9 +139,9 @@ If you have an idea, bug fix, improvement, or new feature you'd like to add, fee
 
 1. **Fork** the repository.
 2. **Clone** your fork to your local machine:
-   ```bash
-   git clone https://github.com/your-username/repo-name.git
-   ```
+```bash
+git clone https://github.com/your-username/repo-name.git
+```
 3. Create a new branch for your feature or bug fix:
 ```bash 
 git checkout -b feature/your-feature-name
