@@ -51,7 +51,7 @@ public class UserDAO {
         }
         return null;        
     }
-
+    // TODO: hash the following credentials
     public boolean addStoredLogin(String ownerUsername, String serviceName, String loginUsername, String loginPassword) {
         System.out.println("Adding stored login for user: " + ownerUsername + ", service: " + serviceName + ", username: " + loginUsername);
         Integer userId = getUserIdByUsername(ownerUsername);

@@ -11,33 +11,42 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [recentlySignIn, setRecentlySignIn] = useState(false)
   const [granted, setGranted] = useState(false)
+  const [loading, setLoading] = useState(false);
 
-  const { credentials, setCredentials } = useContext(CredentialsContext); // Make sure this is not undefined
+
+  const { setCurrSignedInUser } = useContext(CredentialsContext); 
   const navigate = useNavigate();
 
   const handleLogIn = async (e) => {
-  if (username === "" || password === "") {
-    setGranted(false);
-    setRecentlySignIn(true);
-    setTimeout(() => setRecentlySignIn(false), 2000);
-    return;
-  }
+    if(loading) return; 
+    if (username === "" || password === "") {
+      setGranted(false);
+      setLoading(true);
+      setTimeout(() => setLoading(false), 2000);
+      return;
+    }
 
-  const isValid = await checkCred(username, password);
-  setGranted(isValid);
-  setRecentlySignIn(true);
- 
-  if (isValid) {
-    setTimeout(() => {
-      setRecentlySignIn(false);
-      navigate("/dashboard");
-    }, 2000);
-  } else {
-    setTimeout(() => setRecentlySignIn(false), 2000);
-  }
-};
+    setLoading(true);
+    const isValid = await checkCred(username, password);
+    setGranted(isValid);
+  
+    if (isValid) {
+      setTimeout(() => {
+        setLoading(false);
+        setCurrSignedInUser(username)
+        navigate("/dashboard");
+      }, 2000);
+    } else {
+      setTimeout(() => setLoading(false), 2000);
+    }
+  };
+
+  const handleReturn = () => {
+    handleLogIn();
+  };
 
   return (
+
       <div className='flex justify-center items-center h-screen'>      
         
         <div className='flex flex-col pl-20 pr-20 pt-10 pb-5 border-2 rounded-2xl shadow-2xl'>
@@ -46,7 +55,7 @@ export default function LoginPage() {
             <p className='text-sm text-gray-400'>Enter your credentials to access your account</p>
           </div>
           {/* USERNAME FIELD */}
-            <div>
+            <div className='w-full'>
               <p className='text-black text-sm '>Username</p>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -55,14 +64,14 @@ export default function LoginPage() {
                   type="email"
                   placeholder="Enter your username"
                   onChange={(e) => setUsername(e.target.value)}
-                  className="text-black pl-10 h-12 border-slate-200 focus:border-primary focus:ring-primary/20 transition-all duration-200"
+                  className="text-black w-full pl-10 h-12 border-slate-200 focus:border-primary focus:ring-primary/20 transition-all duration-200"
                   required
                 />
               </div>
             </div>
 
-
-            <div className='mt-5'>
+          {/* PASSWORD FIELD */}
+            <div className='mt-5 w-full'>
               <p className='text-black text-sm '>Password</p>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -71,8 +80,12 @@ export default function LoginPage() {
                   type="password"
                   placeholder="Enter your email"
                   onChange={(e) => setPassword(e.target.value)}
-
-                  className="text-black pl-10 h-12 border-slate-200 focus:border-primary focus:ring-primary/20 transition-all duration-200"
+                  className="text-black w-full pl-10 h-12 border-slate-200 focus:border-primary focus:ring-primary/20 transition-all duration-200"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !loading) {
+                      handleLogIn();
+                    }
+                  }}
                   required
                 />
               </div>
@@ -80,22 +93,18 @@ export default function LoginPage() {
 
             <div
               key="signIn-btn"
-              className={`h-12 border-2 rounded-xl mt-5 transition-colors duration-500 ${
-                recentlySignIn && granted ? "bg-green-600" :
-                recentlySignIn && !granted ? "bg-red-600" :
-                "bg-blue-600"
-              }`}
+               className={`h-12 border-2 rounded-xl mt-5 transition-colors duration-500 ${
+                  loading && granted ? "bg-green-600" :
+                  loading && !granted ? "bg-red-600" :
+                  "bg-blue-600"
+                }`}
             >
               <button
                 onClick={() => handleLogIn()}
+                disabled={loading}
                 className='text-white w-full h-full flex justify-center items-center hover:cursor-pointer font-bold'
-
-              ><LogIn className='mr-3'/> Sign In
-              {
-
-              }
-                
-
+              >
+                <LogIn className='mr-3' /> {loading ? "Signing In..." : "Sign In"}
               </button>
 
             </div>

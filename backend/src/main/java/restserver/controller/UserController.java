@@ -73,11 +73,11 @@ public class UserController {
 
     if(SQLservice.addStoredLogin(serviceLoginDTO.getOwnerUsername(), serviceLoginDTO.getServiceName(), serviceLoginDTO.getServiceUsername(), serviceLoginDTO.getServicePassword())) {
       System.out.println("New service login added for user: " + serviceLoginDTO.getOwnerUsername() + ", service: " + serviceLoginDTO.getServiceName());
-      response.put("status", "New service login added successfully");
+      response.put("status", "OK");
       return ResponseEntity.status(HttpStatus.CREATED).body(response);
     } else {
       System.out.println("Failed to add new service login for user: " + serviceLoginDTO.getOwnerUsername() + ", service: " + serviceLoginDTO.getServiceName());
-      response.put("status", "Failed to add new service login");
+      response.put("status", "NOT_OK");
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
   }

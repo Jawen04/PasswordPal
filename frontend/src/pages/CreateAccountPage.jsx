@@ -1,5 +1,4 @@
 import { useContext, useState } from 'react';
-import { CredentialsContext } from '../util/LoginContext';
 import backgroundImg from '../assets/nature.jpg' 
 import CreateUser from '../util/CreateUser';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";

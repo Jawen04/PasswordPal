@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Key, Lock, Shield, User, Settings, Calendar } from 'lucide-react';
+import { Key, Lock, Shield, Plus, User, Settings, Calendar } from 'lucide-react';
 import { useState } from "react"
 
 
@@ -13,6 +13,7 @@ export default function SideBar({ isOpen }) {
   const options = [
   {option: "Dashboard", symbol: <Key size={15} className='mr-4 ml-2' />, url: '/dashboard'},
   {option: "Passwords", symbol: <Lock size={15} className='mr-4 ml-2' />, url: '/passwords'},
+  {option: "Add Password", symbol: <Plus size={15} className='mr-4 ml-2' />, url: '/AddPassword'},
   {option: "Password Generator", symbol: <Shield size={15} className='mr-4 ml-2' />, url: '/generatePassword'},
   {option: "Profile", symbol: <User size={15} className='mr-4 ml-2' />, url: '/profile'},
   {option: "Settings", symbol: <Settings size={15} className='mr-4 ml-2' />, url: '/settings'},
@@ -44,12 +45,12 @@ export default function SideBar({ isOpen }) {
     >
       <div className="p-4 flex flex-col items-start text-gray-700">
         <p className='text-gray-400 text-sm font-medium text-left'>PASSWORD MANAGEMENT</p>
-        {options.slice(0,3).map((optionObj, index) => (
+        {options.slice(0,4).map((optionObj, index) => (
           <button key={index} onClick={() => handleOptionSwitch(optionObj)} className={`flex flex-row items-center hover:cursor-pointer text-base hover:bg-gray-300 rounded-lg w-full pt-2 pb-2 font-medium mb-1 mr-2 ${currentSelected.option === optionObj.option ? 'bg-purple-500' : 'bg-gray-100'}`}> {optionObj.symbol} {optionObj.option}</button>
         ))}
         
         <p className='text-gray-400 text-sm font-medium text-left pt-5'>ACCOUNT</p>
-        {options.slice(3).map((optionObj, index) => (
+        {options.slice(4).map((optionObj, index) => (
             <button key={index} onClick={() => handleOptionSwitch(optionObj) } className={`flex flex-row items-center hover:cursor-pointer text-base hover:bg-gray-300 rounded-lg w-full pt-2 pb-2 font-medium mb-1 mr-2 ${currentSelected.option === optionObj.option ? 'bg-purple-500' : 'bg-gray-100'}`}> {optionObj.symbol} {optionObj.option}</button>
         ))}
       </div>

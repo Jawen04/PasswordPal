@@ -14,7 +14,7 @@ export default function TitleAndBtn( {title, message }) {
             
             <button
               className='text-white justify-center items-center bg-red-400 h-15 rounded-xl p-4 hover:cursor-pointer hover:bg-red-300 flex flex-row'
-              onClick={() => navigate("/generatePassword")}
+              onClick={() => navigate("/passwords")}
               >
               <Plus  className='pr-1' /> Add Password
 
