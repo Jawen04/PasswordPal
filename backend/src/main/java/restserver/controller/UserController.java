@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import restserver.dto.ServiceLoginDTO;
 import restserver.dto.UserDTO;
 
+import restserver.entity.User;
 import restserver.db.UserDAO;
 import java.util.HashMap;
 import java.util.List;
@@ -28,10 +29,12 @@ public class UserController {
   public ResponseEntity<Map<String, String>> registerUser(@RequestBody UserDTO userDTO) {
     Map<String, String> response = new HashMap<>();
 
+    // if(userDTO.getUsername().isBlank() || userDTO.getPassword().isBlank()) { ... }
+
     if(userDTO.getUsername().replaceAll("\\s+", "").equals("") || userDTO.getPassword().replaceAll("\\s+", "").equals("")) {
       System.out.println("Username and password cannot be empty");
       response.put("status", "NOT_OK");
-      return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
     SQLservice.registerUser(userDTO.getUsername(), userDTO.getPassword());
     System.out.println("USER REGISTERED");
@@ -42,18 +45,34 @@ public class UserController {
   @PostMapping("/remove")
   public ResponseEntity<Map<String, String>> removeUser(@RequestBody UserDTO userDTO) {
     Map<String, String> response = new HashMap<>();
-    if(SQLservice.removeUser(userDTO.getUsername())) {
+
+    if(userDTO.getUsername().replaceAll("\\s+", "").equals("") || userDTO.getPassword().replaceAll("\\s+", "").equals("")) {
+      System.out.println("Username and password cannot be empty");
+      response.put("status", "NOT_OK");
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+    else if(SQLservice.removeUser(userDTO.getUsername())) {
       response.put("status", "User removed successfully");
       return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
+    } 
     response.put("status", "Failed to remove user");
-    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
   }
 
+
+  /*
   @GetMapping("/getAll")
   public Map<String, String> getAllUsers() {
-    return SQLservice.getAllUsers();
+    Map<String, String> userMap = new HashMap<>();
+    for(User user : SQLservice.getAllUsers()) {
+      userMap.put(user.getUsername(), user.getPassword());
+    }
+
+    return userMap;
   }
+
+  */
+  
 
   @PostMapping("/isExisting")
   public ResponseEntity<Map<String, String>> isExistingUser(@RequestBody UserDTO userDTO) {

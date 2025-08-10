@@ -1,6 +1,9 @@
 package restserver.controller;
 
 import restserver.db.UserDAO;
+
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -8,6 +11,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
 
 import restserver.service.UserService;
+import restserver.entity.User;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,16 +32,24 @@ public class AuthController {
         String password = credentials.get("password");
 
         Map<String, String> response = new HashMap<>();
-        for (Map.Entry<String, String> e : SQLservice.getAllUsers().entrySet()) {
-            if (username.equals(e.getKey()) && password.equals(e.getValue())) { 
-                session.setAttribute("user", username); 
-                response.put("status", "GRANTED");
-                System.out.println("GRANTED:::");
-                return response;
-            }
+
+        int userId = SQLservice.getUserIdByUsername(username);
+        User user = SQLservice.getUserByUsername(username);
+
+        if (userId == -1) {
+            response.put("status", "DENIED");
+            return response;
+        }
+        if (password.equals(user.getPassword())) {
+            String sessionId = SQLservice.createNewUserSession(userId);
+            response.put("status", "GRANTED");
+            response.put("sessionId", sessionId);
+            System.out.println("User: " + username + " logged in successfully");
+            System.out.println("New session created for user: " + username + "(id: " + sessionId + ")");
+            return response;
         }
         response.put("status", "DENIED");
-        System.out.println("DENIED::::");
+        System.out.println("ERROR: Could not log in user " + username);
         return response;
     }
 
@@ -56,6 +68,7 @@ public class AuthController {
     public Map<String, String> logout(HttpSession session) {
         session.invalidate(); // Destroy session
         Map<String, String> response = new HashMap<>();
+        // Change login flag to false here
         response.put("status", "LOGGED_OUT");
         return response;
     } 

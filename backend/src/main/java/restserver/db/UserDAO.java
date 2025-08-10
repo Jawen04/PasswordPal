@@ -3,6 +3,8 @@ package restserver.db;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import java.util.UUID;
+
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -10,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import restserver.entity.User;
 
 @Repository
 public class UserDAO {
@@ -20,6 +23,90 @@ public class UserDAO {
     public UserDAO(DataSource dataSource) {
         this.dataSource = dataSource;
     }
+
+    public String createNewUserSession(int userId) {
+        String sql = "INSERT INTO user_sessions (session_id, user_id) VALUES (?, ?)";
+        String sessionId = UUID.randomUUID().toString();
+
+        if(userId == -1) {
+            System.out.println("Could not find the requested user ID");
+            return "";
+        }
+
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            System.out.println("Attempting to create a new session");
+            pstmt.setString(1, sessionId);
+            pstmt.setInt(2, userId);
+            pstmt.executeUpdate();
+            System.out.println("New session created!");
+            return sessionId;
+        } catch (SQLException e) {
+            System.err.println("SQL Error during session initialization: " + e.getMessage());
+        }
+        return null;
+    }
+
+
+    public boolean terminateSession(String sessionId) {
+        String sql = "DELETE FROM user_sessions WHERE session_id = ?";
+
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, sessionId);
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Session terminated!");
+                return true;
+            } else {
+                System.out.println("Could not terminate session");
+                
+            }
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        return false;
+    }
+
+    public boolean isUserLoggedIn(String sessionId, int userId) {
+        String sql = "SELECT 1 FROM user_sessions WHERE session_id = ? AND user_id = ? LIMIT 1";
+
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, sessionId);
+            stmt.setInt(2, userId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next(); 
+            }
+        } catch (SQLException e) {
+            System.err.println("Error checking login status: " + e.getMessage());
+        }
+        return false;
+    }
+
+    public int getCurrentSignedInUser() {
+        String sql = "SELECT * FROM user_sessions ORDER BY user_id ASC LIMIT 1";
+
+
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            ResultSet rs = stmt.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt("user_id");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+
+    
+
+   
+    
 
     public void registerUser(String username, String password) {
         String sql = "INSERT INTO users (username, password) VALUES (?, ?)";
@@ -36,7 +123,24 @@ public class UserDAO {
         }
     }
 
-    public Integer getUserIdByUsername(String username) {
+    public String getUsernameById(int userId) {
+        String sql = "SELECT username FROM users WHERE id = ?";
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("username");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting username by ID: " + e.getMessage());
+        }
+        return null; 
+    }
+
+
+    public int getUserIdByUsername(String username) {
         String sql = "SELECT id FROM users WHERE username = ?";
         try (Connection conn = dataSource.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -49,14 +153,37 @@ public class UserDAO {
             } catch (SQLException e) {
             System.err.println("Error getting user ID: " + e.getMessage());
         }
-        return null;        
+        return -1;        
     }
+
+    public User getUserByUsername(String username) {
+    String sql = "SELECT * FROM users WHERE username = ?";
+    try (Connection conn = dataSource.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setString(1, username);
+        try (ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                return new User(
+                    rs.getInt("id"),
+                    rs.getString("username"),
+                    rs.getString("password")
+                );
+            }
+        }
+    } catch (SQLException e) {
+        System.err.println("Error fetching user by username: " + e.getMessage());
+    }
+    return null;
+}
+
+
+
     // TODO: hash the following credentials
     public boolean addStoredLogin(String ownerUsername, String serviceName, String loginUsername, String loginPassword) {
         System.out.println("Adding stored login for user: " + ownerUsername + ", service: " + serviceName + ", username: " + loginUsername);
-        Integer userId = getUserIdByUsername(ownerUsername);
+        int userId = getUserIdByUsername(ownerUsername);
 
-        if(userId == null) {
+        if(userId == -1) {
             System.out.println("User not found: " + ownerUsername);
             return false;
         }
@@ -83,9 +210,9 @@ public class UserDAO {
 
     public List<Map<String, String>> getStoredLogins(String username) {
         List<Map<String, String>> storedLogins = new ArrayList<>();
-        Integer userId = getUserIdByUsername(username);
+        int userId = getUserIdByUsername(username);
 
-        if (userId == null) {
+        if (userId == -1) {
             System.out.println("User not found: " + username);
             return storedLogins;
         }
@@ -118,6 +245,7 @@ public class UserDAO {
 
 
 
+
     public boolean removeUser(String username) {
         if ("admin".equals(username)) {
             System.out.println("Cannot delete admin user.");
@@ -143,53 +271,48 @@ public class UserDAO {
         return false;
     }
 
-    public Map<String, String> getAllUsers() {
-        Map<String, String> userMap = new HashMap<>();
+    public List<User> getAllUsers() {
+        List<User> userList = new ArrayList<>();
         String sql = "SELECT * FROM users";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet resultSet = stmt.executeQuery()) {
+             ResultSet rs = stmt.executeQuery()) {
 
-            while (resultSet.next()) {
-                String username = resultSet.getString("username");
-                String password = resultSet.getString("password");
-                userMap.put(username, password);
+            while (rs.next()) {
+                User user = new User(
+                    rs.getInt("id"),
+                    rs.getString("username"),
+                    rs.getString("password")
+                );
+                userList.add(user);
             }
         } catch (SQLException e) {
             System.err.println("Error: " + e.getMessage());
         }
 
-        return userMap;
+        return userList;
     }
 
     public boolean isExistingUser(String username) {
-        String sql = "SELECT * FROM users";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet resultSet = stmt.executeQuery()) {
-
-            while (resultSet.next()) {
-                if(username.replaceAll("\\s+", "").equals(resultSet.getString("username").replaceAll("\\s+", ""))) {
-                    return true;
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
+    String sql = "SELECT 1 FROM users WHERE username = ? LIMIT 1";
+    try (Connection conn = dataSource.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setString(1, username.trim());
+        try (ResultSet rs = stmt.executeQuery()) {
+            return rs.next();
         }
-
-        return false;
+    } catch (SQLException e) {
+        System.err.println("Error: " + e.getMessage());
     }
-
-
-    public void addPassword(String username, String password) {
-
+    return false;
+}
 
 
 
 
 
-    }
+    
 
 
 

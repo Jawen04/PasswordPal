@@ -6,18 +6,19 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 @Entity
-public class AdminUser {
+public class User {
 
     private String username;
     private String password; // Replacing Time object with its ID
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private int id;
 
-    public AdminUser() {}
+    public User() {}
 
-    public AdminUser(String username, String password) {
+    public User(int id, String username, String password) {
+        this.id = id;
         this.username = username;
         this.password = password;
     }
@@ -30,8 +31,9 @@ public class AdminUser {
         return password;
     }
 
-    public Long getId() {
+    public int getId() {
         return id;
     }
+
     
 }
