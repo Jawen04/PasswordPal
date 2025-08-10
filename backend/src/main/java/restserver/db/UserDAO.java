@@ -88,7 +88,6 @@ public class UserDAO {
     public int getCurrentSignedInUser() {
         String sql = "SELECT * FROM user_sessions ORDER BY user_id ASC LIMIT 1";
 
-
         try (Connection conn = dataSource.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql);
             ResultSet rs = stmt.executeQuery()) {
@@ -293,6 +292,8 @@ public class UserDAO {
 
         return userList;
     }
+
+
 
     public boolean isExistingUser(String username) {
     String sql = "SELECT 1 FROM users WHERE username = ? LIMIT 1";

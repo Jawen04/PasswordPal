@@ -74,6 +74,11 @@ public class UserController {
   */
   
 
+  @PostMapping("/getCurrentSignedInUser")
+  public String getCurrentSignedInUser() {
+    return SQLservice.getUsernameById(SQLservice.getCurrentSignedInUser());
+  }
+
   @PostMapping("/isExisting")
   public ResponseEntity<Map<String, String>> isExistingUser(@RequestBody UserDTO userDTO) {
     Map<String, String> response = new HashMap<>();

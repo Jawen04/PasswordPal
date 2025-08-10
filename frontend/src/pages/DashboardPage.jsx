@@ -4,6 +4,7 @@ import TitleAndBtn from '../components/TitleAndBtn';
 
 import Card from '../components/Card';
 import Banner from '../components/Banner';
+import { getCurrentSignedInUser } from '../util/getCurrentSignedInUser';
 
 
 
@@ -26,7 +27,7 @@ function Content() {
     
     return (
         <div className='w-full max-w-3xl px-4 ml-10 mr-10'>
-            <TitleAndBtn  title={"DashBoard"} message={"Manage your passwords and account security"}/>
+            <TitleAndBtn  title={"Welcome back " + getCurrentSignedInUser()} message={"Manage your passwords and account security"}/>
             <PasswordHealthCard />
         </div>
     )
