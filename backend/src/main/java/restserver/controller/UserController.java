@@ -74,7 +74,7 @@ public class UserController {
   */
   
 
-  @PostMapping("/getCurrentSignedInUser")
+  @GetMapping("/getCurrentSignedInUser")
   public String getCurrentSignedInUser() {
     return SQLservice.getUsernameById(SQLservice.getCurrentSignedInUser());
   }
@@ -108,7 +108,7 @@ public class UserController {
 
   @PostMapping("/getAllLogins")
   public List<Map<String,String>> getAllLogins(@RequestBody UserDTO userDTO) {
-    System.out.println("Fetching all logins for user: " + userDTO.getUsername());  
+    System.out.println("Fetching all logins for userDTO: " + userDTO);  
     return SQLservice.getStoredLogins(userDTO.getUsername());
   }
 }
