@@ -5,11 +5,12 @@ import backgroundImg from '../assets/nature.jpg'
 import checkCred from '../util/CheckCred'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { User, Lock, LogIn } from 'lucide-react'
+import { loginUser } from "../util/loginUser"
+console.log("loginUser import:", loginUser);
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [recentlySignIn, setRecentlySignIn] = useState(false)
   const [granted, setGranted] = useState(false)
   const [loading, setLoading] = useState(false);
 

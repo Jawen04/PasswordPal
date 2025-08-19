@@ -1,5 +1,5 @@
 
-async function getCurrentSignedInUser(sessionId) {
+export async function getCurrentSignedInUser(sessionId) {
   try {
     const response = await fetch('http://localhost:8080/api/user/getCurrentSignedInUser', {
       method: 'GET',

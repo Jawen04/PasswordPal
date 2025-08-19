@@ -1,4 +1,4 @@
-async function loginUser(username, password) {
+export async function loginUser(username, password) {
   try {
     const response = await fetch('http://localhost:8080/api/user/login', {
       method: 'POST',
