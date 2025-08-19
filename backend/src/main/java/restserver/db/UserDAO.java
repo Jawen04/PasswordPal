@@ -156,24 +156,42 @@ public class UserDAO {
     }
 
     public User getUserByUsername(String username) {
-    String sql = "SELECT * FROM users WHERE username = ?";
-    try (Connection conn = dataSource.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(sql)) {
-        stmt.setString(1, username);
-        try (ResultSet rs = stmt.executeQuery()) {
-            if (rs.next()) {
-                return new User(
-                    rs.getInt("id"),
-                    rs.getString("username"),
-                    rs.getString("password")
-                );
+        String sql = "SELECT * FROM users WHERE username = ?";
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, username);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new User(
+                        rs.getInt("id"),
+                        rs.getString("username"),
+                        rs.getString("password")
+                    );
+                }
             }
+        } catch (SQLException e) {
+            System.err.println("Error fetching user by username: " + e.getMessage());
         }
-    } catch (SQLException e) {
-        System.err.println("Error fetching user by username: " + e.getMessage());
+        return null;
+        }
+
+        public int getUserIdBySession(String sessionId) {
+        String sql = "SELECT user_id FROM user_sessions WHERE session_id = ?";
+
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, sessionId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("user_id");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting user ID by session: " + e.getMessage());
+        }
+        return -1;
     }
-    return null;
-}
+
 
 
 

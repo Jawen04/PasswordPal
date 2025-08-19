@@ -23,11 +23,11 @@ export default function DashBoard() {
 
 
 
-async function Content() {
-    const currUser = await getCurrentSignedInUser();
+function Content() {
+    // const currUser = await getCurrentSignedInUser();
     return (
         <div className='w-full max-w-3xl px-4 ml-10 mr-10'>
-            <TitleAndBtn  title={"Welcome back djeijdiejd" + currUser} message={"Manage your passwords and account security"}/>
+            <TitleAndBtn  title={"Welcome back djeijdiejd"} message={"Manage your passwords and account security"}/>
             <PasswordHealthCard />
         </div>
     )

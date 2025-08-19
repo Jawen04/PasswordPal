@@ -1,0 +1,26 @@
+async function loginUser(username, password) {
+  try {
+    const response = await fetch('http://localhost:8080/api/user/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, password })
+    });
+
+    const data = await response.json();
+
+    if (data.status === 'OK') {
+      // Save session ID in localStorage
+      localStorage.setItem('sessionId', data.sessionId);
+      console.log('Login successful! Session ID saved.');
+      return true;
+    } else {
+      console.error('Login failed:', data.message);
+      return false;
+    }
+  } catch (err) {
+    console.error('Error during login:', err);
+    return false;
+  }
+}

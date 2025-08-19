@@ -27,23 +27,20 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    const isValid = await checkCred(username, password);
+    const isValid = await loginUser(username, password);
     setGranted(isValid);
-  
+    console.log(isValid)
+    setLoading(false);
     if (isValid) {
-      setTimeout(() => {
-        setLoading(false);
-        setCurrSignedInUser(username)
-        navigate("/dashboard");
-      }, 2000);
+      setCurrSignedInUser("admin");
+      navigate("/dashboard");
     } else {
-      setTimeout(() => setLoading(false), 2000);
+      setGranted(false);
     }
+
   };
 
-  const handleReturn = () => {
-    handleLogIn();
-  };
+
 
   return (
 

@@ -1,21 +1,19 @@
 
-export async function getCurrentSignedInUser() {
-  
+async function getCurrentSignedInUser(sessionId) {
   try {
     const response = await fetch('http://localhost:8080/api/user/getCurrentSignedInUser', {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Session-Id': sessionId
+      }
     });
 
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`HTTP error! status: ${response.status}, message: ${text}`);
-    }
-
-    return await response.json();
-    
-  } catch (error) {
-    console.error('Error:', error);
-    return null; 
+    const data = await response.json(); // this works now
+    console.log(data);
+    return data;
+  } catch (err) {
+    console.error('Error fetching current user:', err);
   }
 }
+
