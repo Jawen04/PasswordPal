@@ -1,13 +1,16 @@
 package restserver.controller;
 
 import restserver.db.UserDAO;
-
-
+import restserver.dto.UserDTO;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import restserver.service.UserService;
@@ -27,30 +30,51 @@ public class AuthController {
     UserDAO SQLservice;
 
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody Map<String, String> credentials, HttpSession session) {
-        String username = credentials.get("username");
-        String password = credentials.get("password");
-
+    public ResponseEntity<Map<String, String>> loginUser(@RequestBody UserDTO userDTO, HttpServletResponse httpResponse) { 
         Map<String, String> response = new HashMap<>();
 
-        int userId = SQLservice.getUserIdByUsername(username);
-        User user = SQLservice.getUserByUsername(username);
+        System.out.println("Trying to login user: " + userDTO.getUsername());
+        // Check if username/password are empty
+        if (userDTO.getUsername().trim().isEmpty() || userDTO.getPassword().trim().isEmpty()) {
+            response.put("status", "NOT_OK");
+            response.put("message", "Username or password cannot be empty");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
 
-        if (userId == -1) {
-            response.put("status", "DENIED");
-            return response;
+        boolean valid = SQLservice.validateUser(userDTO.getUsername(), userDTO.getPassword());
+
+        if (valid) {
+            System.out.println("Login valid! Creating new user session ...");
+            String sessionId = SQLservice.createNewUserSession(userDTO.getUsername());
+
+            // Set cookie correctly
+            Cookie cookie = new Cookie("sessionId", sessionId);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(false); // set to false for local dev
+            cookie.setPath("/"); // valid for entire app
+            httpResponse.addCookie(cookie); 
+
+            return ResponseEntity.ok(Map.of("status", "OK"));
         }
-        if (password.equals(user.getPassword())) {
-            String sessionId = SQLservice.createNewUserSession(userId);
-            response.put("status", "GRANTED");
-            response.put("sessionId", sessionId);
-            System.out.println("User: " + username + " logged in successfully");
-            System.out.println("New session created for user: " + username + "(id: " + sessionId + ")");
-            return response;
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("status", "FAIL"));
+    }
+
+     @PostMapping("/logout")
+    public ResponseEntity<?> logout(@CookieValue(value = "sessionId", defaultValue = "") String sessionId, HttpServletResponse response) {
+        System.out.println("Login out user: " + SQLservice.getUserIdBySession(sessionId));
+        // Expire the cookie
+        Cookie cookie = new Cookie("sessionId", "");
+        cookie.setPath("/");
+        cookie.setMaxAge(0); // expires instantly
+        response.addCookie(cookie);
+
+        // Terminate session server-side
+        if (!sessionId.isEmpty()) {
+            SQLservice.terminateSession(sessionId);
         }
-        response.put("status", "DENIED");
-        System.out.println("ERROR: Could not log in user " + username);
-        return response;
+
+        return ResponseEntity.ok(Map.of("status", "LOGGED_OUT"));
     }
 
     @GetMapping("/check")
@@ -64,26 +88,7 @@ public class AuthController {
         return response;
     }
 
-     @PostMapping("/logout")
-    public Map<String, String> logout(HttpSession session) {
-        session.invalidate(); // Destroy session
-        Map<String, String> response = new HashMap<>();
-        // Change login flag to false here
-        response.put("status", "LOGGED_OUT");
-        return response;
-    } 
-
-    @PostConstruct
-    public void testConnection() {
-        try {
-            System.out.println("Testing database connection...");
-            SQLservice.getAllUsers(); // Or any simple query
-            System.out.println("Database connection successful!");
-        } catch (Exception e) {
-            System.err.println("Database connection failed:");
-            e.printStackTrace();
-        }
-    }
+   
 
 
     @PostMapping("/testSQL")

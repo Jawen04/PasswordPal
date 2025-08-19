@@ -5,6 +5,9 @@ import org.springframework.boot.origin.SystemEnvironmentOrigin;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import restserver.dto.ServiceLoginDTO;
 import restserver.dto.UserDTO;
 import restserver.db.UserDAO;
@@ -48,23 +51,19 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
-    @GetMapping("/getCurrentSignedInUser")
-    public ResponseEntity<Map<String, String>> getCurrentSignedInUser(@RequestHeader("Session-Id") String sessionId) {
-        Map<String, String> response = new HashMap<>();
-
-        int userId = SQLservice.getUserIdBySession(sessionId); // new method
-        System.out.println("COOLBOIII:" + userId + "found");
-        if(userId == -1) {
-            response.put("status", "NOT_OK");
-            response.put("message", "Invalid session");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    @GetMapping("/currentUser")
+    public ResponseEntity<?> currentUser(@CookieValue(value = "sessionId", defaultValue = "") String sessionId) {
+        if (sessionId.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
+        int userId = SQLservice.getUserIdBySession(sessionId);
+        if (userId == -1) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         String username = SQLservice.getUsernameById(userId);
-        response.put("status", "OK");
-        response.put("username", username);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(Map.of("username", username));
     }
+
 
 
     @PostMapping("/isExisting")
@@ -98,35 +97,13 @@ public class UserController {
     }
 
 
-    @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> loginUser(@RequestBody UserDTO userDTO) {
-      Map<String, String> response = new HashMap<>();
+    
 
-      // Check if username/password are empty
-      if (userDTO.getUsername().trim().isEmpty() || userDTO.getPassword().trim().isEmpty()) {
-          response.put("status", "NOT_OK");
-          response.put("message", "Username or password cannot be empty");
-          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-      }
+   
 
-      User user = SQLservice.getUserByUsername(userDTO.getUsername());
-      if (user == null || !user.getPassword().equals(userDTO.getPassword())) {
-          response.put("status", "NOT_OK");
-          response.put("message", "Invalid username or password");
-          return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-      }
 
-      // Create a new session
-      String sessionId = SQLservice.createNewUserSession(user.getId());
-      if (sessionId == null) {
-          response.put("status", "NOT_OK");
-          response.put("message", "Failed to create session");
-          return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-      }
 
-      response.put("status", "OK");
-      response.put("sessionId", sessionId);
-    return ResponseEntity.ok(response);
-  }
+
+
 
 }

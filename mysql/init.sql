@@ -30,6 +30,6 @@ CREATE TABLE user_accounts (
 );
 
 
-INSERT INTO users (username, password) VALUES ('admin', 'adminpass');
+INSERT INTO users (username, password) VALUES ('admin', '$2a$10$Kv5ZyrgGRCLfA2XkCemxjerJCOwUbGb7aSZ6yXZHw3WlNo1wdPChe');
 
 

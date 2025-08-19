@@ -1,6 +1,6 @@
 export async function loginUser(username, password) {
   try {
-    const response = await fetch('http://localhost:8080/api/user/login', {
+    const response = await fetch('http://localhost:8080/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -9,6 +9,7 @@ export async function loginUser(username, password) {
     });
 
     const data = await response.json();
+    
 
     if (data.status === 'OK') {
       // Save session ID in localStorage

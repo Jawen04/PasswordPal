@@ -3,6 +3,9 @@ package restserver.db;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+
 import java.util.UUID;
 
 
@@ -18,17 +21,22 @@ import restserver.entity.User;
 public class UserDAO {
 
     private final DataSource dataSource;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
 
     @Autowired
     public UserDAO(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
-    public String createNewUserSession(int userId) {
+
+
+
+    public String createNewUserSession(String username) {
         String sql = "INSERT INTO user_sessions (session_id, user_id) VALUES (?, ?)";
         String sessionId = UUID.randomUUID().toString();
 
-        if(userId == -1) {
+        if(getUserIdByUsername(username) == -1) {
             System.out.println("Could not find the requested user ID");
             return "";
         }
@@ -37,7 +45,7 @@ public class UserDAO {
             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             System.out.println("Attempting to create a new session");
             pstmt.setString(1, sessionId);
-            pstmt.setInt(2, userId);
+            pstmt.setInt(2, getUserIdByUsername(username));
             pstmt.executeUpdate();
             System.out.println("New session created!");
             return sessionId;
@@ -102,19 +110,48 @@ public class UserDAO {
     }
 
 
-    
+
+
+    public boolean validateUser(String username, String enteredPassword) {
+        String sql = "SELECT password FROM users WHERE username = ?";
+
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            System.out.println("Trying to validate user: " + username);
+            stmt.setString(1, username);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    String hashedPassword = rs.getString("password");
+                    System.out.println("password in db: "+ hashedPassword);
+                    System.out.println("Entered password: " + enteredPassword);
+                    return passwordEncoder.matches(enteredPassword, hashedPassword);
+                } else {
+                    return false;
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("SQL Error during user validation: " + e.getMessage());
+        }
+
+        return false;
+    }
+
 
    
     
 
-    public void registerUser(String username, String password) {
+    public void registerUser(String username, String plainPassword) {
         String sql = "INSERT INTO users (username, password) VALUES (?, ?)";
+        
 
         try (Connection conn = dataSource.getConnection();
             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             System.out.println("Attempting to register user: " + username);
             pstmt.setString(1, username);
-            pstmt.setString(2, password);
+            pstmt.setString(2, passwordEncoder.encode(plainPassword));
             pstmt.executeUpdate();
             System.out.println("User: " + username + " registered successfully.");
         } catch (SQLException e) {
