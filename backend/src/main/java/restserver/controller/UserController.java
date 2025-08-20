@@ -44,7 +44,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
         if (SQLservice.removeUser(userDTO.getUsername())) {
-            response.put("status", "User removed successfully");
+            response.put("status", "OK");
             return ResponseEntity.ok(response);
         }
         response.put("status", "Failed to remove user");
@@ -53,15 +53,33 @@ public class UserController {
 
     @GetMapping("/currentUser")
     public ResponseEntity<?> currentUser(@CookieValue(value = "sessionId", defaultValue = "") String sessionId) {
+
+        System.out.println("Calling db function");
+        System.out.println("Session id: " + sessionId);
         if (sessionId.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         int userId = SQLservice.getUserIdBySession(sessionId);
         if (userId == -1) {
+            System.out.println("Unautohrized!");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         String username = SQLservice.getUsernameById(userId);
+        System.out.println("Current User: " + username);
         return ResponseEntity.ok(Map.of("username", username));
+    }
+
+    @GetMapping("/hasActiveSession")
+    public ResponseEntity<Map<String, String>> hasActiveSession(@CookieValue(value = "sessionId", defaultValue = "") String sessionId) {
+        System.out.println("validating user session");
+        Map<String, String> response = new HashMap<>();
+
+        if(SQLservice.isValidSession(sessionId)) {
+            response.put("status", "OK");
+            return ResponseEntity.ok(response);
+        }
+         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
     }
 
 

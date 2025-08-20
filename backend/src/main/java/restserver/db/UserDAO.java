@@ -35,32 +35,62 @@ public class UserDAO {
     public String createNewUserSession(String username) {
         String sql = "INSERT INTO user_sessions (session_id, user_id) VALUES (?, ?)";
         String sessionId = UUID.randomUUID().toString();
+        int userId = getUserIdByUsername(username);
 
-        if(getUserIdByUsername(username) == -1) {
+        if(userId == -1) {
             System.out.println("Could not find the requested user ID");
-            return "";
+            return null;
         }
 
         try (Connection conn = dataSource.getConnection();
             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             System.out.println("Attempting to create a new session");
             pstmt.setString(1, sessionId);
-            pstmt.setInt(2, getUserIdByUsername(username));
-            pstmt.executeUpdate();
-            System.out.println("New session created!");
-            return sessionId;
+            pstmt.setInt(2, userId);
+            int rowsAffected = pstmt.executeUpdate();
+            if(rowsAffected > 0) {
+                System.out.println("New session created with id: " + sessionId);
+                return sessionId;
+            } else {
+                System.out.println("Could not insert new user session into db");
+                return null;
+            }
+            
         } catch (SQLException e) {
             System.err.println("SQL Error during session initialization: " + e.getMessage());
         }
         return null;
     }
 
+    public boolean isValidSession(String sessionId) {
+        String sql = "SELECT 1 FROM user_sessions WHERE session_id = ? LIMIT 1";
+
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, sessionId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next(); 
+            }
+        } catch (SQLException e) {
+            System.err.println("Error validating session: " + e.getMessage());
+        }
+        return false;
+    }
+
+
 
     public boolean terminateSession(String sessionId) {
         String sql = "DELETE FROM user_sessions WHERE session_id = ?";
 
+        if (sessionId == null || sessionId.isEmpty()) {
+            System.out.println("Invalid session ID");
+            return false;
+        }
+
         try (Connection conn = dataSource.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            System.out.println("Attempting to terminate session with ID: " + sessionId);
             stmt.setString(1, sessionId);
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected > 0) {
@@ -68,7 +98,7 @@ public class UserDAO {
                 return true;
             } else {
                 System.out.println("Could not terminate session");
-                
+                return false;
             }
         } catch (SQLException e) {
             System.err.println("Error: " + e.getMessage());
@@ -76,22 +106,27 @@ public class UserDAO {
         return false;
     }
 
-    public boolean isUserLoggedIn(String sessionId, int userId) {
-        String sql = "SELECT 1 FROM user_sessions WHERE session_id = ? AND user_id = ? LIMIT 1";
+    public String getActiveSessionId(int userId) {
+        String sql = "SELECT session_id FROM user_sessions WHERE user_id = ? LIMIT 1";
 
         try (Connection conn = dataSource.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, sessionId);
-            stmt.setInt(2, userId);
+
+            stmt.setInt(1, userId);
 
             try (ResultSet rs = stmt.executeQuery()) {
-                return rs.next(); 
+                if (rs.next()) {
+                    return rs.getString("session_id"); // return the found sessionId
+                }
             }
+
         } catch (SQLException e) {
-            System.err.println("Error checking login status: " + e.getMessage());
+            System.err.println("Error retrieving active session: " + e.getMessage());
         }
-        return false;
+
+        return null; 
     }
+
 
     public int getCurrentSignedInUser() {
         String sql = "SELECT * FROM user_sessions ORDER BY user_id ASC LIMIT 1";
@@ -124,8 +159,6 @@ public class UserDAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     String hashedPassword = rs.getString("password");
-                    System.out.println("password in db: "+ hashedPassword);
-                    System.out.println("Entered password: " + enteredPassword);
                     return passwordEncoder.matches(enteredPassword, hashedPassword);
                 } else {
                     return false;

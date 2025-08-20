@@ -44,15 +44,17 @@ public class AuthController {
         boolean valid = SQLservice.validateUser(userDTO.getUsername(), userDTO.getPassword());
 
         if (valid) {
-            System.out.println("Login valid! Creating new user session ...");
-            String sessionId = SQLservice.createNewUserSession(userDTO.getUsername());
+            String possibleActiveSession = SQLservice.getActiveSessionId(SQLservice.getUserIdByUsername(userDTO.getUsername()));
+            String sessionId = possibleActiveSession != null ? possibleActiveSession : SQLservice.createNewUserSession(userDTO.getUsername());
 
-            // Set cookie correctly
             Cookie cookie = new Cookie("sessionId", sessionId);
             cookie.setHttpOnly(true);
             cookie.setSecure(false); // set to false for local dev
             cookie.setPath("/"); // valid for entire app
+            cookie.setMaxAge(60 * 10); // 10 min
             httpResponse.addCookie(cookie); 
+            
+            System.out.println("Login valid! Creating new user session ...");
 
             return ResponseEntity.ok(Map.of("status", "OK"));
         }
@@ -60,8 +62,9 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("status", "FAIL"));
     }
 
-     @PostMapping("/logout")
+    @PostMapping("/logout")
     public ResponseEntity<?> logout(@CookieValue(value = "sessionId", defaultValue = "") String sessionId, HttpServletResponse response) {
+        System.out.println("From controller sessionID: " + sessionId);
         System.out.println("Login out user: " + SQLservice.getUserIdBySession(sessionId));
         // Expire the cookie
         Cookie cookie = new Cookie("sessionId", "");

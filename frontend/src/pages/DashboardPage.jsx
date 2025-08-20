@@ -24,11 +24,25 @@ export default function DashBoard() {
 
 
 function Content() {
-    // const currUser = await getCurrentSignedInUser();
+    const [currUser, setCurrUser] = useState("");
+
+    useEffect(() => {
+      async function fetchUser() {
+        try {
+          const data = await getCurrentSignedInUser();
+          
+          setCurrUser(data?.username)
+          console.log("username: " + data.username)
+        } catch (error) {
+          console.error(error)
+        }
+      }
+      fetchUser()
+    }, [])
     return (
         <div className='w-full max-w-3xl px-4 ml-10 mr-10'>
-            <TitleAndBtn  title={"Welcome back djeijdiejd"} message={"Manage your passwords and account security"}/>
-            <PasswordHealthCard />
+          <TitleAndBtn  title={`Welcome back ${currUser ?? ""}`} message="Manage your passwords and account security" />            
+          <PasswordHealthCard />
         </div>
     )
 

@@ -1,13 +1,14 @@
 
-export async function getCurrentSignedInUser(sessionId) {
+export async function getCurrentSignedInUser() {
   try {
-    const response = await fetch('http://localhost:8080/api/user/getCurrentSignedInUser', {
+    const response = await fetch('http://localhost:8080/api/user/currentUser', {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Session-Id': sessionId
-      }
+      credentials: 'include'
     });
+
+    if(!response.ok) {
+      throw new Error(response)
+    }
 
     const data = await response.json(); // this works now
     console.log(data);
