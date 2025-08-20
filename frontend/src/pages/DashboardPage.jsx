@@ -4,6 +4,7 @@ import TitleAndBtn from '../components/TitleAndBtn';
 
 import Card from '../components/Card';
 import Banner from '../components/Banner';
+import { getCurrentSignedInUser } from '../util/getCurrentSignedInUser';
 
 
 
@@ -23,20 +24,29 @@ export default function DashBoard() {
 
 
 function Content() {
-    
+    const [currUser, setCurrUser] = useState("");
+
+    useEffect(() => {
+      async function fetchUser() {
+        try {
+          const data = await getCurrentSignedInUser();
+          
+          setCurrUser(data?.username)
+          console.log("username: " + data.username)
+        } catch (error) {
+          console.error(error)
+        }
+      }
+      fetchUser()
+    }, [])
     return (
         <div className='w-full max-w-3xl px-4 ml-10 mr-10'>
-            <TitleAndBtn  title={"DashBoard"} message={"Manage your passwords and account security"}/>
-            <PasswordHealthCard />
+          <TitleAndBtn  title={`Welcome back ${currUser ?? ""}`} message="Manage your passwords and account security" />            
+          <PasswordHealthCard />
         </div>
     )
 
 }
-
-
-
-
-
 
 function PasswordHealthCard() {
   const passwordTypes = [

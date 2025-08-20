@@ -1,18 +1,18 @@
 package restserver.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.origin.SystemEnvironmentOrigin;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import restserver.dto.ServiceLoginDTO;
 import restserver.dto.UserDTO;
-
 import restserver.db.UserDAO;
+import restserver.entity.User;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,75 +21,107 @@ import java.util.Map;
 @RequestMapping("/api/user")
 public class UserController {
 
-  @Autowired
-  private UserDAO SQLservice;
+    @Autowired
+    private UserDAO SQLservice;
 
-  @PostMapping("/register")
-  public ResponseEntity<Map<String, String>> registerUser(@RequestBody UserDTO userDTO) {
-    Map<String, String> response = new HashMap<>();
-
-    if(userDTO.getUsername().replaceAll("\\s+", "").equals("") || userDTO.getPassword().replaceAll("\\s+", "").equals("")) {
-      System.out.println("Username and password cannot be empty");
-      response.put("status", "NOT_OK");
-      return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
+    @PostMapping("/register")
+    public ResponseEntity<Map<String, String>> registerUser(@RequestBody UserDTO userDTO) {
+        Map<String, String> response = new HashMap<>();
+        if (userDTO.getUsername().trim().isEmpty() || userDTO.getPassword().trim().isEmpty()) {
+            response.put("status", "NOT_OK");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        SQLservice.registerUser(userDTO.getUsername(), userDTO.getPassword());
+        response.put("status", "OK");
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-    SQLservice.registerUser(userDTO.getUsername(), userDTO.getPassword());
-    System.out.println("USER REGISTERED");
-    response.put("status", "OK");
-    return ResponseEntity.status(HttpStatus.CREATED).body(response);
-  }
 
-  @PostMapping("/remove")
-  public ResponseEntity<Map<String, String>> removeUser(@RequestBody UserDTO userDTO) {
-    Map<String, String> response = new HashMap<>();
-    if(SQLservice.removeUser(userDTO.getUsername())) {
-      response.put("status", "User removed successfully");
-      return ResponseEntity.status(HttpStatus.OK).body(response);
+    @PostMapping("/remove")
+    public ResponseEntity<Map<String, String>> removeUser(@RequestBody UserDTO userDTO) {
+        Map<String, String> response = new HashMap<>();
+        if (userDTO.getUsername().trim().isEmpty() || userDTO.getPassword().trim().isEmpty()) {
+            response.put("status", "NOT_OK");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        if (SQLservice.removeUser(userDTO.getUsername())) {
+            response.put("status", "OK");
+            return ResponseEntity.ok(response);
+        }
+        response.put("status", "Failed to remove user");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
-    response.put("status", "Failed to remove user");
-    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-  }
 
-  @GetMapping("/getAll")
-  public Map<String, String> getAllUsers() {
-    return SQLservice.getAllUsers();
-  }
+    @GetMapping("/currentUser")
+    public ResponseEntity<?> currentUser(@CookieValue(value = "sessionId", defaultValue = "") String sessionId) {
 
-  @PostMapping("/isExisting")
-  public ResponseEntity<Map<String, String>> isExistingUser(@RequestBody UserDTO userDTO) {
-    Map<String, String> response = new HashMap<>();
-    if(SQLservice.isExistingUser(userDTO.getUsername())) {
-      response.put("status", "User " + userDTO.getUsername() + " is already existing in the database");
-      return ResponseEntity.status(HttpStatus.OK).body(response);
-    } else {
-      response.put("status", "User " + userDTO.getUsername() + " is NOT existing in the database");
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        System.out.println("Calling db function");
+        System.out.println("Session id: " + sessionId);
+        if (sessionId.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        int userId = SQLservice.getUserIdBySession(sessionId);
+        if (userId == -1) {
+            System.out.println("Unautohrized!");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String username = SQLservice.getUsernameById(userId);
+        System.out.println("Current User: " + username);
+        return ResponseEntity.ok(Map.of("username", username));
     }
-  }
 
-  @PostMapping("/addNewLogin")
-  public ResponseEntity<Map<String, String>> addNewLogin(@RequestBody ServiceLoginDTO serviceLoginDTO) {
-    Map<String, String> response = new HashMap<>();
+    @GetMapping("/hasActiveSession")
+    public ResponseEntity<Map<String, String>> hasActiveSession(@CookieValue(value = "sessionId", defaultValue = "") String sessionId) {
+        System.out.println("validating user session");
+        Map<String, String> response = new HashMap<>();
 
-    if(SQLservice.addStoredLogin(serviceLoginDTO.getOwnerUsername(), serviceLoginDTO.getServiceName(), serviceLoginDTO.getServiceUsername(), serviceLoginDTO.getServicePassword())) {
-      System.out.println("New service login added for user: " + serviceLoginDTO.getOwnerUsername() + ", service: " + serviceLoginDTO.getServiceName());
-      response.put("status", "OK");
-      return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    } else {
-      System.out.println("Failed to add new service login for user: " + serviceLoginDTO.getOwnerUsername() + ", service: " + serviceLoginDTO.getServiceName());
-      response.put("status", "NOT_OK");
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        if(SQLservice.isValidSession(sessionId)) {
+            response.put("status", "OK");
+            return ResponseEntity.ok(response);
+        }
+         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
     }
-  }
 
-  @PostMapping("/getAllLogins")
-  public List<Map<String,String>> getAllLogins(@RequestBody UserDTO userDTO) {
-    System.out.println("Fetching all logins for user: " + userDTO.getUsername());  
-    return SQLservice.getStoredLogins(userDTO.getUsername());
-  }
+
+
+    @PostMapping("/isExisting")
+    public ResponseEntity<Map<String, String>> isExistingUser(@RequestBody UserDTO userDTO) {
+        Map<String, String> response = new HashMap<>();
+        if (SQLservice.isExistingUser(userDTO.getUsername())) {
+            response.put("status", "User " + userDTO.getUsername() + " already exists");
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("status", "User " + userDTO.getUsername() + " does NOT exist");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+    }
+
+    @PostMapping("/addNewLogin")
+    public ResponseEntity<Map<String, String>> addNewLogin(@RequestBody ServiceLoginDTO serviceLoginDTO) {
+        Map<String, String> response = new HashMap<>();
+        if (SQLservice.addStoredLogin(serviceLoginDTO.getOwnerUsername(), serviceLoginDTO.getServiceName(),
+                serviceLoginDTO.getServiceUsername(), serviceLoginDTO.getServicePassword())) {
+            response.put("status", "OK");
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } else {
+            response.put("status", "NOT_OK");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PostMapping("/getAllLogins")
+    public List<Map<String, String>> getAllLogins(@RequestBody UserDTO userDTO) {
+        return SQLservice.getStoredLogins(userDTO.getUsername());
+    }
+
+
+    
+
+   
+
+
+
+
+
+
 }
-
-
-
-
-  

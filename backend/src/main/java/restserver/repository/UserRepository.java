@@ -2,9 +2,9 @@ package restserver.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import restserver.entity.AdminUser;
+import restserver.entity.User;
 
 
-@Repository  // Ensure this is present
-public interface UserRepository extends JpaRepository<AdminUser, Long> {
+@Repository  
+public interface UserRepository extends JpaRepository<User, Integer> {
 }

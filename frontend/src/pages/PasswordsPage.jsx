@@ -7,6 +7,7 @@ import CredentialsCard from "../components/CredentialsCard";
 import { getAllStoredLogins } from "../util/getAllStoredLogins";
 import useAddServicePassword from "../util/AddServicePassword";
 import { CredentialsContext } from "../util/LoginContext";
+import { getCurrentSignedInUser } from "../util/getCurrentSignedInUser";
 
 
 export default function PasswordsPage() {
@@ -35,17 +36,18 @@ function Content() {
 
 function PasswordsCard() {
   const [credentials, setCredentials] = useState([]);
-  const { currSignedInUser } = useContext(CredentialsContext); 
 
 
-  useEffect(() => {
+ useEffect(() => {
     async function fetchCredentials() {
-      if (!currSignedInUser) return; 
-      const creds = await getAllStoredLogins(currSignedInUser);
-      setCredentials(creds);
+      const currSignedInUser = await getCurrentSignedInUser(); 
+      if (currSignedInUser) {
+        const creds = await getAllStoredLogins(currSignedInUser);
+        setCredentials(creds);
+      }
     }
     fetchCredentials();
-  }, [currSignedInUser]);
+  }, []);
 
   return (
     <Card className="p-6 max-w-4xl mx-auto w-full">

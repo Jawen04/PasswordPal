@@ -1,15 +1,11 @@
-import { useContext } from "react";
-import { CredentialsContext } from "./LoginContext";
-
 
 export async function getAllStoredLogins( user ) {
-    const { currSignedInUser } = useContext(CredentialsContext);
   
   try {
     const response = await fetch('http://localhost:8080/api/user/getAllLogins', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user  })
+      body: JSON.stringify(user)
     });
 
     if (!response.ok) {
