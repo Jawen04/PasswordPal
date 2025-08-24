@@ -1,12 +1,11 @@
-
 export async function checkActiveSession() {
   try {
     const response = await fetch('http://localhost:8080/api/user/hasActiveSession', {
       method: 'GET',
-      credentials: 'include'
+      credentials: 'include',
     });
 
-     if (response.ok) {
+    if (response.ok) {
       const data = await response.json();
       return data.status === "OK"; // true if session is valid
     } else if (response.status === 401) {
@@ -15,10 +14,8 @@ export async function checkActiveSession() {
       console.error("Unexpected response:", response.status);
       return false;
     }
-
-    
-    return true;
   } catch (err) {
     console.error('Error fetching current session:', err);
+    return false; // always return boolean
   }
 }

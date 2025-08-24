@@ -15,10 +15,12 @@ export async function logoutUser() {
 
         if (data.status === 'OK') {
             console.log("Successfully logged out")
+            return true;
         }
     } catch (err) {
         console.error('Error during login:', err);
         return false;
     }
+    return false
     
 }

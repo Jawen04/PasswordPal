@@ -7,7 +7,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "r
 import { User, Lock, LogIn } from 'lucide-react'
 import { loginUser } from "../util/loginUser"
 import { checkActiveSession } from '../util/checkActiveSession';
-console.log("loginUser import:", loginUser);
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -16,7 +15,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
 
-  const { setCurrSignedInUser } = useContext(CredentialsContext); 
   const navigate = useNavigate();
 
   
@@ -43,8 +41,7 @@ export default function LoginPage() {
     setLoading(true);
     const isValid = await loginUser(username, password);
     setGranted(isValid);
-    console.log(isValid)
-    setLoading(false);
+    setLoading(true);
     if (isValid) {
       setGranted(true)
       navigate("/dashboard");

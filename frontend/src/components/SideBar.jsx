@@ -3,6 +3,8 @@ import { Key, Lock, Shield, Plus, User, Settings, Calendar } from 'lucide-react'
 import { useState } from "react"
 import { logoutUser } from '../util/logoutUser';
 
+import ErrorPopup from '../components/ErrorPopUp';
+
 
 
 export default function SideBar({ isOpen }) {
@@ -32,14 +34,18 @@ export default function SideBar({ isOpen }) {
 
 
   
-  async function handlelogout() {
+  const handlelogout = async (e) => {
+    console.log("Trying to log out")
     try {
-      if(logoutUser()) {
+      if(await logoutUser()) {
         navigate("/auth/login")
+        console.log("Now redirecting")
+      } else {
+        <ErrorPopup message="Could not logout user" />
       }
-      return await logoutUser();        
     } catch (error) {
-      console.error(error)
+      <ErrorPopup message="Could not logout user" />
+      console.error("Could not logout user: " + error)
     }
   }
     
@@ -76,7 +82,7 @@ export default function SideBar({ isOpen }) {
     <div className=''>
        <button
           className={`flex flex-row items-center hover:cursor-pointer text-base text-gray-800 hover:bg-gray-300 rounded-lg w-full pt-2 pb-2 font-medium mb-1 mr-2`}
-          onClick={() => handlelogout()}
+          onClick={handlelogout}
         >
           LOG OUT
         </button>

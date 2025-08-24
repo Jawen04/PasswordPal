@@ -11,7 +11,6 @@ export async function getCurrentSignedInUser() {
     }
 
     const data = await response.json(); // this works now
-    console.log(data);
     return data;
   } catch (err) {
     console.error('Error fetching current user:', err);

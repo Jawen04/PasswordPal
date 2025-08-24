@@ -5,19 +5,56 @@ import TitleAndBtn from '../components/TitleAndBtn';
 import Card from '../components/Card';
 import Banner from '../components/Banner';
 import { getCurrentSignedInUser } from '../util/getCurrentSignedInUser';
+import { checkActiveSession } from '../util/checkActiveSession';
 
 
 
 
 export default function DashBoard() {
-    return (
+
+    const [hasActiveSession, setHasActiveSession] = useState(false)
+
+    useEffect( () =>{
+      async function handleCheckActiveSession() {
+        try {
+          if(await checkActiveSession()) {
+            setHasActiveSession(true)
+            console.log("Active Session now set to true!")
+          }
+        } catch (error) {
+          console.log("Error when checking active user session: " + error)
+        }
+      }
+      handleCheckActiveSession()
+    }, []) 
+      
+
+
+    if(hasActiveSession) {
+      return (
         <div>
             <Banner />
             <div className='flex flex-col justify-center items-center'>
               <Content />
             </div>
         </div>
-    )
+        
+      )
+    } else {
+      return (
+        <div className='h-full w-full'>
+          <div className='flex flex-col justify-center items-center'>
+            <p className='bg-red-500 flex flex-col text-xl'>
+              USER NOT LOGGED IN
+            </p>
+          </div>
+        </div>
+
+      )
+
+
+    }
+    
 } 
 
 
