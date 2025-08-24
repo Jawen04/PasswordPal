@@ -64,6 +64,7 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@CookieValue(value = "sessionId", defaultValue = "") String sessionId, HttpServletResponse response) {
+
         System.out.println("From controller sessionID: " + sessionId);
         System.out.println("Login out user: " + SQLservice.getUserIdBySession(sessionId));
         // Expire the cookie
@@ -75,9 +76,15 @@ public class AuthController {
         // Terminate session server-side
         if (!sessionId.isEmpty()) {
             SQLservice.terminateSession(sessionId);
+            return ResponseEntity.ok(Map.of("status", "OK"));
         }
 
-        return ResponseEntity.ok(Map.of("status", "LOGGED_OUT"));
+        return ResponseEntity.ok(Map.of("status", "NOT_OK"));
+
+
+
+
+        
     }
 
     @GetMapping("/check")

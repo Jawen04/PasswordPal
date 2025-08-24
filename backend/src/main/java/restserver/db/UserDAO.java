@@ -1,8 +1,11 @@
 package restserver.db;
 
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 
@@ -19,7 +22,7 @@ import restserver.entity.User;
 
 @Repository
 public class UserDAO {
-
+    private static final Logger logger = LoggerFactory.getLogger(UserDAO.class);
     private final DataSource dataSource;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -63,20 +66,59 @@ public class UserDAO {
     }
 
     public boolean isValidSession(String sessionId) {
-        String sql = "SELECT 1 FROM user_sessions WHERE session_id = ? LIMIT 1";
+        if (sessionId == null || sessionId.isEmpty()) {
+            logger.warn("SessionId cannot be null or empty!");
+            return false;
+        }
+
+        String sql = "SELECT EXISTS(SELECT 1 FROM user_sessions WHERE session_id = ?)";
+
+        logger.info("calling isValidSession");
 
         try (Connection conn = dataSource.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
             stmt.setString(1, sessionId);
 
             try (ResultSet rs = stmt.executeQuery()) {
-                return rs.next(); 
+                if (rs.next()) {
+                    return rs.getBoolean(1); // returns true if session exists
+                } else {
+                    return false;
+                }
             }
+
         } catch (SQLException e) {
-            System.err.println("Error validating session: " + e.getMessage());
+            logger.error("Error validating session: {}", e.getMessage(), e);
+            return false;
         }
-        return false;
     }
+
+
+    // public boolean isValidSession(String sessionId) {
+    //     if (sessionId == null || sessionId.isEmpty()) {
+    //         System.err.println("SessionId field cannot be empty!");
+    //         return false;
+    //     }
+
+    //     System.out.println("called UserDAO/isValidSession");
+    //     String sql = "SELECT 1 FROM user_sessions WHERE session_id = ? LIMIT 1";
+
+    //     try (Connection conn = dataSource.getConnection();
+    //         PreparedStatement stmt = conn.prepareStatement(sql)) {
+    //         stmt.setString(1, sessionId);
+
+    //         try (ResultSet rs = stmt.executeQuery()) {
+    //             return rs.next(); 
+    //         } catch (SQLException err) {
+    //             System.err.println("Error executing query: " + err.getMessage());
+    //             return false;
+    //         }
+    //     } catch (SQLException e) {
+    //         System.err.println("Error validating session: " + e.getMessage());
+    //         return false;
+    //     }
+    // }
 
 
 
@@ -84,7 +126,7 @@ public class UserDAO {
         String sql = "DELETE FROM user_sessions WHERE session_id = ?";
 
         if (sessionId == null || sessionId.isEmpty()) {
-            System.out.println("Invalid session ID");
+            System.err.println("SessionId field cannot be empty!");
             return false;
         }
 

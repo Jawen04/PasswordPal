@@ -16,6 +16,6 @@ export async function checkActiveSession() {
     }
   } catch (err) {
     console.error('Error fetching current session:', err);
-    return false; // always return boolean
+    return false; 
   }
 }

@@ -70,15 +70,23 @@ public class UserController {
     }
 
     @GetMapping("/hasActiveSession")
-    public ResponseEntity<Map<String, String>> hasActiveSession(@CookieValue(value = "sessionId", defaultValue = "") String sessionId) {
+    public ResponseEntity<Map<String, String>> hasActiveSession(@CookieValue(value = "sessionId", required = false) String sessionId) {
         System.out.println("validating user session");
         Map<String, String> response = new HashMap<>();
+
+        if (sessionId == null || sessionId.isEmpty()) {
+            response.put("status", "NO_SESSION");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
 
         if(SQLservice.isValidSession(sessionId)) {
             response.put("status", "OK");
             return ResponseEntity.ok(response);
+        } else {
+            response.put("status", "INVALID_SESSION");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
-         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        
 
     }
 
