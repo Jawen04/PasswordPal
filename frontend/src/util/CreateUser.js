@@ -1,8 +1,6 @@
 export default async function CreateUser(username, password) {
-    const apiURL = 'http://localhost:8080/api/user/register'
-
     try {
-      const response = await fetch(apiURL, {
+      const response = await fetch('http://localhost:8080/api/user/register', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

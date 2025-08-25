@@ -39,7 +39,7 @@ export default function LoginPage() {
 
     setLoading(true);
     const isValid = await loginUser(username, password);
-    setLoading(true);
+    setLoading(isValid);
     if (isValid) {
       setGranted(true)
       navigate("/dashboard");

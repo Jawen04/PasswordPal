@@ -30,7 +30,7 @@ export default function DashBoard() {
       
 
 
-    if(hasActiveSession) {
+    if(true) { //for development change from hasActiveSession to true
       return (
         <div>
             <Banner />
