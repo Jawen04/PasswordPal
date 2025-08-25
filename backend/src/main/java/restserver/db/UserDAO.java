@@ -123,12 +123,13 @@ public class UserDAO {
 
 
     public boolean terminateSession(String sessionId) {
-        String sql = "DELETE FROM user_sessions WHERE session_id = ?";
 
         if (sessionId == null || sessionId.isEmpty()) {
             System.err.println("SessionId field cannot be empty!");
             return false;
         }
+        
+        String sql = "DELETE FROM user_sessions WHERE session_id = ?";
 
         try (Connection conn = dataSource.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -167,6 +168,32 @@ public class UserDAO {
         }
 
         return null; 
+    }
+
+
+    public boolean checkActiveSessionForSessionId(String sessionId) {
+        if (sessionId == null || sessionId.isEmpty()) {
+            System.err.println("SessionId field cannot be empty!");
+            return false;
+        }
+
+        String sql = "SELECT 1 FROM user_sessions WHERE session_id = ? LIMIT 1";
+
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, sessionId); 
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next();
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error checking session: " + e.getMessage());
+            return false;
+        }
+
+
     }
 
 
@@ -218,7 +245,15 @@ public class UserDAO {
    
     
 
-    public void registerUser(String username, String plainPassword) {
+    // returns an integer depending on the success of the registration
+    // 0 -> user registered succesfully
+    // 1 -> username already taken, unsuccessful
+    // -1 -> error
+    public int registerUser(String username, String plainPassword) {
+
+        if(getUserByUsername(username) != null) {
+            return 1;
+        }
         String sql = "INSERT INTO users (username, password) VALUES (?, ?)";
         
 
@@ -229,8 +264,10 @@ public class UserDAO {
             pstmt.setString(2, passwordEncoder.encode(plainPassword));
             pstmt.executeUpdate();
             System.out.println("User: " + username + " registered successfully.");
+            return 0;
         } catch (SQLException e) {
             System.err.println("SQL Error during user registration: " + e.getMessage());
+            return -1;
         }
     }
 

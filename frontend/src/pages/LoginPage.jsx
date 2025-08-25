@@ -6,6 +6,7 @@ import checkCred from '../util/CheckCred'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { User, Lock, LogIn } from 'lucide-react'
 import { loginUser } from "../util/loginUser"
+import { checkActiveSession } from '../util/checkActiveSession';
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -27,7 +28,14 @@ export default function LoginPage() {
   //   handleActiveSession();
   // }, []);
 
-
+  useEffect(() => {
+    async function handleAlreadyLoggedIn() {
+      if(await checkActiveSession()) {
+        navigate("/dashboard")
+      }
+    }
+    handleAlreadyLoggedIn()
+  }, [])
   const handleLogIn = async (e) => {
     if(loading) return; 
     if (username === "" || password === "") {

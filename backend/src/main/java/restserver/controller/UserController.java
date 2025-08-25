@@ -24,6 +24,9 @@ public class UserController {
     @Autowired
     private UserDAO SQLservice;
 
+    // 0 -> user registered succesfully
+    // 1 -> username already taken, unsuccessful
+    // -1 -> error
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> registerUser(@RequestBody UserDTO userDTO) {
         Map<String, String> response = new HashMap<>();
@@ -31,8 +34,17 @@ public class UserController {
             response.put("status", "NOT_OK");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
-        SQLservice.registerUser(userDTO.getUsername(), userDTO.getPassword());
-        response.put("status", "OK");
+
+        int dbResponse = SQLservice.registerUser(userDTO.getUsername(), userDTO.getPassword());
+        if(dbResponse == 1) {
+            response.put("status", "OCCUPIED");     
+        } else if (dbResponse == 0) {
+            response.put("status", "OK");
+        } else {
+            response.put("status", "ERROR");
+        }
+
+       
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

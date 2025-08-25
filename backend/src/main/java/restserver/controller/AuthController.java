@@ -30,7 +30,7 @@ public class AuthController {
     UserDAO SQLservice;
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> loginUser(@RequestBody UserDTO userDTO, HttpServletResponse httpResponse) { 
+    public ResponseEntity<Map<String, String>> loginUser(@CookieValue(value = "sessionId", defaultValue = "") String sessionId, @RequestBody UserDTO userDTO, HttpServletResponse httpResponse) { 
         Map<String, String> response = new HashMap<>();
 
         System.out.println("Trying to login user: " + userDTO.getUsername());
@@ -44,10 +44,26 @@ public class AuthController {
         boolean valid = SQLservice.validateUser(userDTO.getUsername(), userDTO.getPassword());
 
         if (valid) {
-            String possibleActiveSession = SQLservice.getActiveSessionId(SQLservice.getUserIdByUsername(userDTO.getUsername()));
-            String sessionId = possibleActiveSession != null ? possibleActiveSession : SQLservice.createNewUserSession(userDTO.getUsername());
 
-            Cookie cookie = new Cookie("sessionId", sessionId);
+
+            // Check if the user already has an active session
+            // TODO: issue a new sessionId even if the user has one already, for security 
+            String possibleActiveSession = SQLservice.getActiveSessionId(SQLservice.getUserIdByUsername(userDTO.getUsername()));
+            String newSessionId = "";
+            if(possibleActiveSession == null) {
+                newSessionId = SQLservice.createNewUserSession(userDTO.getUsername());
+            } else {
+                // Check if the browser has an active session, if it has and does not belong to the user wanting to log in - terminate
+                if(SQLservice.checkActiveSessionForSessionId(sessionId) && !possibleActiveSession.equals(sessionId)) {
+                    SQLservice.terminateSession(sessionId);
+                }
+                newSessionId = possibleActiveSession;
+            }
+           
+            
+
+
+            Cookie cookie = new Cookie("sessionId", newSessionId);
             cookie.setHttpOnly(true);
             cookie.setSecure(false); // set to false for local dev
             cookie.setPath("/"); // valid for entire app

@@ -10,13 +10,23 @@ export default async function CreateUser(username, password) {
       if (!response.ok) {
         throw new Error(`Server responded with status ${response.status}`);
       }  
+
+
       const data = await response.json();
-      return data.status === "OK";
+      const status = data.status;
+
+      if(status === "OCCUPIED") {
+        return 1;
+      } else if(status === "OK") {
+        return 0;
+      } else if(status === "ERROR") {
+        return -1;
+      }
 
       } catch (error) {
         console.error("User registration failed", error);
         alert("Could not connect to server or invalid response.");
-      return false;
+        return -1;
     }
 
 }
