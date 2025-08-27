@@ -1,11 +1,11 @@
 
-export async function getAllStoredLogins( user ) {
+export async function getAllStoredLogins() {
   
   try {
     const response = await fetch('http://localhost:8080/api/user/getAllLogins', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(user)
+      credentials: 'include'
     });
 
     if (!response.ok) {
@@ -19,6 +19,7 @@ export async function getAllStoredLogins( user ) {
       username: entry.username,
       password: entry.password
     }));
+
 
     return list;
 

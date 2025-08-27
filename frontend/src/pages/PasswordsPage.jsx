@@ -74,18 +74,19 @@ const AddPasswordBox = () => {
   const { currSignedInUser } = useContext(CredentialsContext); 
 
 
+  const [logins, setLogins] = useState([])
+
+
   // Correct: call the hook at the top level to get the function
-  const addServicePassword = useAddServicePassword();
 
   const handleEnter = async () => {
     console.log("FROM FRONTEND: ADDING LOGIN");
     if (service === "" || username === "" || password === "") return;
 
-    const success = await addServicePassword({
-      user: currSignedInUser,
+    const success = await useAddServicePassword({
       serviceName: service,
-      username: username,
-      password: password,
+      serviceUsername: username,
+      servicePassword: password,
     });
 
     if (success) {
@@ -97,7 +98,13 @@ const AddPasswordBox = () => {
     } else {
       alert("NOT OK FROM JSX");
     }
+
+
   };
+
+  
+
+  
 
   return (
     <Card className="p-6 max-w-4xl mx-auto w-full">
@@ -131,6 +138,14 @@ const AddPasswordBox = () => {
         onKeyDown={(e) => e.key === "Enter" && handleEnter()}
         className="w-full text-black h-10 rounded-lg border-slate-900 bg-pink-200 focus:border-primary focus:ring-primary/20 transition-all duration-200 mb-4 p-2"
       />
+      <div>
+      
+
+
+
+
+      </div>
+      
     </Card>
   );
 };
