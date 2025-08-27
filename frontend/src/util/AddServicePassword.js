@@ -3,7 +3,7 @@ import { CredentialsContext } from "./LoginContext";
 
 export default function useAddServicePassword() {
 
-  const addServicePassword = async ({ user, serviceName, username, password }) => {
+  const addServicePassword = async ({ serviceName, username, password }) => {
     const apiURL = "http://localhost:8080/api/user/addNewLogin";
     console.log("FETCHING...");
 
@@ -13,7 +13,6 @@ export default function useAddServicePassword() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          ownerUsername: user,
           serviceName,
           serviceUsername: username,
           servicePassword: password,

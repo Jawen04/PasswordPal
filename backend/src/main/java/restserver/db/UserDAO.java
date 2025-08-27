@@ -11,14 +11,19 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.UUID;
 
-
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import restserver.config.AESKeyProvider;
 import restserver.entity.User;
+import restserver.util.AESUtils;
 
 @Repository
 public class UserDAO {
@@ -26,12 +31,18 @@ public class UserDAO {
     private final DataSource dataSource;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
+    // key stored securely
+    @Autowired
+    private AESKeyProvider keyProvider;
+
+    private final SecretKey secretKey = keyProvider.getKey();
 
     @Autowired
     public UserDAO(DataSource dataSource) {
         this.dataSource = dataSource;
     }
-
+    
+    
 
 
 
@@ -345,9 +356,10 @@ public class UserDAO {
 
 
     // TODO: hash the following credentials
-    public boolean addStoredLogin(String ownerUsername, String serviceName, String loginUsername, String loginPassword) {
+    public boolean addStoredLogin(String serviceName, String loginUsername, String loginPassword) {
+        int userId = getCurrentSignedInUser();
+        String ownerUsername = getUsernameById(userId); 
         System.out.println("Adding stored login for user: " + ownerUsername + ", service: " + serviceName + ", username: " + loginUsername);
-        int userId = getUserIdByUsername(ownerUsername);
 
         if(userId == -1) {
             System.out.println("User not found: " + ownerUsername);
@@ -360,9 +372,12 @@ public class UserDAO {
             stmt.setInt(1, userId);
             stmt.setString(2, serviceName);
             stmt.setString(3, loginUsername);
-
-             // TODO: Encrypt loginPassword before saving, for now storing plain text
-                stmt.setString(4, loginPassword);
+                try {
+                    stmt.setString(4, AESUtils.encrypt(loginPassword, secretKey));
+                } catch (Exception e) {
+                    System.err.println("Could not encrypt login password! " + e.getMessage());
+                    return false;
+                }
 
                 stmt.executeUpdate();
                 System.out.println("Stored login added for user " + ownerUsername + " service " + serviceName);
@@ -374,12 +389,12 @@ public class UserDAO {
     }
 
 
-    public List<Map<String, String>> getStoredLogins(String username) {
+    public List<Map<String, String>> getStoredLogins() {
         List<Map<String, String>> storedLogins = new ArrayList<>();
-        int userId = getUserIdByUsername(username);
+        int userId = getCurrentSignedInUser();
 
         if (userId == -1) {
-            System.out.println("User not found: " + username);
+            System.out.println("User not found: " + getUsernameById(userId));
             return storedLogins;
         }
 
@@ -392,14 +407,19 @@ public class UserDAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Map<String, String> loginEntry = new HashMap<>();
-                    loginEntry.put("service", rs.getString("service_name"));
+                    loginEntry.put("service",   rs.getString("service_name"));
                     loginEntry.put("username", rs.getString("login_username"));
-                    loginEntry.put("password", rs.getString("login_password")); // plaintext for now
+                    try {
+                        loginEntry.put("password", AESUtils.decrypt(rs.getString("login_password"), secretKey)); // plaintext for now
+                    } catch (Exception e) {
+                        System.err.println("Could not decypt login password! " + e.getMessage());
+                    }
                     storedLogins.add(loginEntry);
                 }
             }
         } catch (SQLException e) {
             System.err.println("Error retrieving stored logins: " + e.getMessage());
+            return storedLogins;
         }
 
         return storedLogins;

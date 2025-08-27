@@ -119,8 +119,8 @@ public class UserController {
     @PostMapping("/addNewLogin")
     public ResponseEntity<Map<String, String>> addNewLogin(@RequestBody ServiceLoginDTO serviceLoginDTO) {
         Map<String, String> response = new HashMap<>();
-        if (SQLservice.addStoredLogin(serviceLoginDTO.getOwnerUsername(), serviceLoginDTO.getServiceName(),
-                serviceLoginDTO.getServiceUsername(), serviceLoginDTO.getServicePassword())) {
+        if (SQLservice.addStoredLogin(serviceLoginDTO.getServiceName(),
+            serviceLoginDTO.getServiceUsername(), serviceLoginDTO.getServicePassword())) {
             response.put("status", "OK");
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } else {
@@ -130,8 +130,8 @@ public class UserController {
     }
 
     @PostMapping("/getAllLogins")
-    public List<Map<String, String>> getAllLogins(@RequestBody UserDTO userDTO) {
-        return SQLservice.getStoredLogins(userDTO.getUsername());
+    public List<Map<String, String>> getAllLogins() {
+        return SQLservice.getStoredLogins();
     }
 
 

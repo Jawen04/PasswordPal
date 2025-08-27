@@ -1,4 +1,4 @@
-package restserver;
+package restserver.util;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
