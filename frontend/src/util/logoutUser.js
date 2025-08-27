@@ -14,7 +14,6 @@ export async function logoutUser() {
     
 
         if (data.status === 'OK') {
-            console.log("Successfully logged out")
             return true;
         }
     } catch (err) {

@@ -16,7 +16,6 @@ export default async function CheckPassword(username, password) {
       return data.status === "GRANTED";
     } catch (error) {
       console.error("Login check failed:", error);
-      alert("Could not connect to server or invalid response.");
       return false;
     }
   }

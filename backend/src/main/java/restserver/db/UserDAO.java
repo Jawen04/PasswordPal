@@ -35,11 +35,13 @@ public class UserDAO {
     @Autowired
     private AESKeyProvider keyProvider;
 
-    private final SecretKey secretKey = keyProvider.getKey();
-
     @Autowired
     public UserDAO(DataSource dataSource) {
         this.dataSource = dataSource;
+    }
+
+    private SecretKey getSecretKey() {
+        return keyProvider.getKey();
     }
     
     
@@ -52,26 +54,26 @@ public class UserDAO {
         int userId = getUserIdByUsername(username);
 
         if(userId == -1) {
-            System.out.println("Could not find the requested user ID");
+            logger.warn("Could not find the requested user ID with username: " + username);
             return null;
         }
 
         try (Connection conn = dataSource.getConnection();
             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            System.out.println("Attempting to create a new session");
+            logger.info("Attempting to create a new session");
             pstmt.setString(1, sessionId);
             pstmt.setInt(2, userId);
             int rowsAffected = pstmt.executeUpdate();
             if(rowsAffected > 0) {
-                System.out.println("New session created with id: " + sessionId);
+                logger.info("New session created with id: " + sessionId);
                 return sessionId;
             } else {
-                System.out.println("Could not insert new user session into db");
+                logger.warn("Could not insert new user session into db");
                 return null;
             }
             
         } catch (SQLException e) {
-            System.err.println("SQL Error during session initialization: " + e.getMessage());
+            logger.warn("SQL Error during session initialization: " + e.getMessage());
         }
         return null;
     }
@@ -84,7 +86,6 @@ public class UserDAO {
 
         String sql = "SELECT EXISTS(SELECT 1 FROM user_sessions WHERE session_id = ?)";
 
-        logger.info("calling isValidSession");
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -106,37 +107,13 @@ public class UserDAO {
     }
 
 
-    // public boolean isValidSession(String sessionId) {
-    //     if (sessionId == null || sessionId.isEmpty()) {
-    //         System.err.println("SessionId field cannot be empty!");
-    //         return false;
-    //     }
-
-    //     System.out.println("called UserDAO/isValidSession");
-    //     String sql = "SELECT 1 FROM user_sessions WHERE session_id = ? LIMIT 1";
-
-    //     try (Connection conn = dataSource.getConnection();
-    //         PreparedStatement stmt = conn.prepareStatement(sql)) {
-    //         stmt.setString(1, sessionId);
-
-    //         try (ResultSet rs = stmt.executeQuery()) {
-    //             return rs.next(); 
-    //         } catch (SQLException err) {
-    //             System.err.println("Error executing query: " + err.getMessage());
-    //             return false;
-    //         }
-    //     } catch (SQLException e) {
-    //         System.err.println("Error validating session: " + e.getMessage());
-    //         return false;
-    //     }
-    // }
 
 
 
     public boolean terminateSession(String sessionId) {
 
         if (sessionId == null || sessionId.isEmpty()) {
-            System.err.println("SessionId field cannot be empty!");
+            logger.warn("SessionId field cannot be empty!");
             return false;
         }
         
@@ -144,18 +121,18 @@ public class UserDAO {
 
         try (Connection conn = dataSource.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            System.out.println("Attempting to terminate session with ID: " + sessionId);
+            logger.info("Attempting to terminate session with ID: " + sessionId);
             stmt.setString(1, sessionId);
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected > 0) {
-                System.out.println("Session terminated!");
+                logger.info("Session terminated!");
                 return true;
             } else {
-                System.out.println("Could not terminate session");
+                logger.warn("Could not terminate session");
                 return false;
             }
         } catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
+            logger.warn("Error: " + e.getMessage());
         }
         return false;
     }
@@ -175,7 +152,7 @@ public class UserDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("Error retrieving active session: " + e.getMessage());
+            logger.warn("Error retrieving active session: " + e.getMessage());
         }
 
         return null; 
@@ -184,7 +161,7 @@ public class UserDAO {
 
     public boolean checkActiveSessionForSessionId(String sessionId) {
         if (sessionId == null || sessionId.isEmpty()) {
-            System.err.println("SessionId field cannot be empty!");
+            logger.warn("SessionId field cannot be empty!");
             return false;
         }
 
@@ -200,7 +177,7 @@ public class UserDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("Error checking session: " + e.getMessage());
+            logger.warn("Error checking session: " + e.getMessage());
             return false;
         }
 
@@ -233,7 +210,6 @@ public class UserDAO {
         try (Connection conn = dataSource.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            System.out.println("Trying to validate user: " + username);
             stmt.setString(1, username);
 
             try (ResultSet rs = stmt.executeQuery()) {
@@ -246,7 +222,7 @@ public class UserDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("SQL Error during user validation: " + e.getMessage());
+            logger.warn("SQL Error during user validation: " + e.getMessage());
         }
 
         return false;
@@ -270,14 +246,13 @@ public class UserDAO {
 
         try (Connection conn = dataSource.getConnection();
             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            System.out.println("Attempting to register user: " + username);
             pstmt.setString(1, username);
             pstmt.setString(2, passwordEncoder.encode(plainPassword));
             pstmt.executeUpdate();
-            System.out.println("User: " + username + " registered successfully.");
+            logger.info("User: " + username + " registered successfully.");
             return 0;
         } catch (SQLException e) {
-            System.err.println("SQL Error during user registration: " + e.getMessage());
+            logger.warn("SQL Error during user registration: " + e.getMessage());
             return -1;
         }
     }
@@ -293,7 +268,7 @@ public class UserDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error getting username by ID: " + e.getMessage());
+            logger.warn("Error getting username by ID: " + e.getMessage());
         }
         return null; 
     }
@@ -310,7 +285,7 @@ public class UserDAO {
                     }
                 }
             } catch (SQLException e) {
-            System.err.println("Error getting user ID: " + e.getMessage());
+            logger.warn("Error getting user ID: " + e.getMessage());
         }
         return -1;        
     }
@@ -330,12 +305,12 @@ public class UserDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error fetching user by username: " + e.getMessage());
+            logger.warn("Error fetching user by username: " + e.getMessage());
         }
         return null;
-        }
+    }
 
-        public int getUserIdBySession(String sessionId) {
+    public int getUserIdForSessionId(String sessionId) {
         String sql = "SELECT user_id FROM user_sessions WHERE session_id = ?";
 
         try (Connection conn = dataSource.getConnection();
@@ -347,22 +322,18 @@ public class UserDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error getting user ID by session: " + e.getMessage());
+            logger.warn("Error getting user ID by session: " + e.getMessage());
         }
         return -1;
     }
 
 
-
-
-    // TODO: hash the following credentials
     public boolean addStoredLogin(String serviceName, String loginUsername, String loginPassword) {
         int userId = getCurrentSignedInUser();
         String ownerUsername = getUsernameById(userId); 
-        System.out.println("Adding stored login for user: " + ownerUsername + ", service: " + serviceName + ", username: " + loginUsername);
 
         if(userId == -1) {
-            System.out.println("User not found: " + ownerUsername);
+            logger.warn("User not found: " + ownerUsername);
             return false;
         }
 
@@ -373,28 +344,32 @@ public class UserDAO {
             stmt.setString(2, serviceName);
             stmt.setString(3, loginUsername);
                 try {
-                    stmt.setString(4, AESUtils.encrypt(loginPassword, secretKey));
+                    stmt.setString(4, AESUtils.encrypt(loginPassword, getSecretKey()));
                 } catch (Exception e) {
-                    System.err.println("Could not encrypt login password! " + e.getMessage());
+                    logger.warn("Could not encrypt login password! " + e.getMessage());
                     return false;
                 }
 
                 stmt.executeUpdate();
-                System.out.println("Stored login added for user " + ownerUsername + " service " + serviceName);
+                logger.info("Stored login added for user: " + ownerUsername + ", service: " + serviceName);
                 return true;
         } catch (SQLException e) {
-            System.err.println("Error adding stored login: " + e.getMessage());
+            logger.warn("Error adding stored login: " + e.getMessage());
             return false;
         }
     }
 
+    
 
-    public List<Map<String, String>> getStoredLogins() {
+
+    public List<Map<String, String>> getStoredLogins(String sessionId) {
         List<Map<String, String>> storedLogins = new ArrayList<>();
-        int userId = getCurrentSignedInUser();
 
+        
+        
+        int userId = getUserIdForSessionId(sessionId);
         if (userId == -1) {
-            System.out.println("User not found: " + getUsernameById(userId));
+            logger.warn("User not found: " + getUsernameById(userId));
             return storedLogins;
         }
 
@@ -410,15 +385,15 @@ public class UserDAO {
                     loginEntry.put("service",   rs.getString("service_name"));
                     loginEntry.put("username", rs.getString("login_username"));
                     try {
-                        loginEntry.put("password", AESUtils.decrypt(rs.getString("login_password"), secretKey)); // plaintext for now
+                        loginEntry.put("password", AESUtils.decrypt(rs.getString("login_password"), getSecretKey())); // plaintext for now
                     } catch (Exception e) {
-                        System.err.println("Could not decypt login password! " + e.getMessage());
+                        logger.warn("Could not decrypt login password! " + e.getMessage());
                     }
                     storedLogins.add(loginEntry);
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error retrieving stored logins: " + e.getMessage());
+            logger.warn("Error retrieving stored logins: " + e.getMessage());
             return storedLogins;
         }
 
@@ -434,7 +409,7 @@ public class UserDAO {
 
     public boolean removeUser(String username) {
         if ("admin".equals(username)) {
-            System.out.println("Cannot delete admin user.");
+            logger.warn("Cannot delete admin user.");
             return false;
         }
 
@@ -445,13 +420,13 @@ public class UserDAO {
             stmt.setString(1, username);
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected > 0) {
-                System.out.println("User " + username + " has been removed.");
+                logger.info("User " + username + " has been removed.");
                 return true;
             } else {
-                System.out.println("No user found with username: " + username);
+                logger.warn("No user found with username: " + username);
             }
         } catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
+            logger.warn("Error: " + e.getMessage());
         }
 
         return false;
@@ -474,7 +449,7 @@ public class UserDAO {
                 userList.add(user);
             }
         } catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
+            logger.warn("Error: " + e.getMessage());
         }
 
         return userList;
@@ -491,7 +466,7 @@ public class UserDAO {
             return rs.next();
         }
     } catch (SQLException e) {
-        System.err.println("Error: " + e.getMessage());
+        logger.warn("Error: " + e.getMessage());
     }
     return false;
 }
@@ -508,7 +483,7 @@ public class UserDAO {
         try (Connection conn = dataSource.getConnection()) {
             return conn != null;
         } catch (SQLException e) {
-            System.err.println("Failed to connect to the database: " + e.getMessage());
+            logger.warn("Failed to connect to the database: " + e.getMessage());
             return false;
         }
     }

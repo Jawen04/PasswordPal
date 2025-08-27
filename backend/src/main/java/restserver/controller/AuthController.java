@@ -3,6 +3,8 @@ package restserver.controller;
 import restserver.db.UserDAO;
 import restserver.dto.UserDTO;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,11 +31,14 @@ public class AuthController {
     @Autowired
     UserDAO SQLservice;
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
+
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> loginUser(@CookieValue(value = "sessionId", defaultValue = "") String sessionId, @RequestBody UserDTO userDTO, HttpServletResponse httpResponse) { 
         Map<String, String> response = new HashMap<>();
 
-        System.out.println("Trying to login user: " + userDTO.getUsername());
+        logger.info("Trying to login user: " + userDTO.getUsername());
         // Check if username/password are empty
         if (userDTO.getUsername().trim().isEmpty() || userDTO.getPassword().trim().isEmpty()) {
             response.put("status", "NOT_OK");
@@ -70,7 +75,6 @@ public class AuthController {
             cookie.setMaxAge(60 * 10); // 10 min
             httpResponse.addCookie(cookie); 
             
-            System.out.println("Login valid! Creating new user session ...");
 
             return ResponseEntity.ok(Map.of("status", "OK"));
         }
@@ -81,8 +85,7 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@CookieValue(value = "sessionId", defaultValue = "") String sessionId, HttpServletResponse response) {
 
-        System.out.println("From controller sessionID: " + sessionId);
-        System.out.println("Login out user: " + SQLservice.getUserIdBySession(sessionId));
+        logger.info("Login out user: " + SQLservice.getUserIdForSessionId(sessionId) + " with sessionId: " + sessionId);
         // Expire the cookie
         Cookie cookie = new Cookie("sessionId", "");
         cookie.setPath("/");
@@ -123,12 +126,12 @@ public class AuthController {
 
 
         try {
-            System.out.println("Testing database connection...");
-            SQLservice.getAllUsers(); 
-            System.out.println("Database connection successful!");
+            logger.info("Testing database connection...");
+            SQLservice.testConnection(); 
+            logger.info("Database connection successful!");
             response.put("status", "SUCCESS");
         } catch (Exception e) {
-            System.err.println("Database connection failed:");
+            logger.warn("Database connection failed:");
             response.put("status", "ERROR");
             e.printStackTrace();
         }

@@ -15,7 +15,6 @@ export default async function useAddServicePassword( { serviceName, serviceUsern
     });
 
     if (!response.ok) {
-      alert("Request failed");
       return false;
     }
 
@@ -24,7 +23,6 @@ export default async function useAddServicePassword( { serviceName, serviceUsern
 
   } catch (error) {
     console.error("Login check failed:", error);
-    alert("Could not connect to server or invalid response.");
     return false;
   }
   

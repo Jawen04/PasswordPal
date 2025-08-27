@@ -66,24 +66,19 @@ public class UserController {
     @GetMapping("/currentUser")
     public ResponseEntity<?> currentUser(@CookieValue(value = "sessionId", defaultValue = "") String sessionId) {
 
-        System.out.println("Calling db function");
-        System.out.println("Session id: " + sessionId);
         if (sessionId.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        int userId = SQLservice.getUserIdBySession(sessionId);
+        int userId = SQLservice.getUserIdForSessionId(sessionId);
         if (userId == -1) {
-            System.out.println("Unautohrized!");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         String username = SQLservice.getUsernameById(userId);
-        System.out.println("Current User: " + username);
         return ResponseEntity.ok(Map.of("username", username));
     }
 
     @GetMapping("/hasActiveSession")
     public ResponseEntity<Map<String, String>> hasActiveSession(@CookieValue(value = "sessionId", required = false) String sessionId) {
-        System.out.println("validating user session");
         Map<String, String> response = new HashMap<>();
 
         if (sessionId == null || sessionId.isEmpty()) {
@@ -119,8 +114,7 @@ public class UserController {
     @PostMapping("/addNewLogin")
     public ResponseEntity<Map<String, String>> addNewLogin(@RequestBody ServiceLoginDTO serviceLoginDTO) {
         Map<String, String> response = new HashMap<>();
-        if (SQLservice.addStoredLogin(serviceLoginDTO.getServiceName(),
-            serviceLoginDTO.getServiceUsername(), serviceLoginDTO.getServicePassword())) {
+        if (SQLservice.addStoredLogin(serviceLoginDTO.getServiceName(), serviceLoginDTO.getServiceUsername(), serviceLoginDTO.getServicePassword())) {
             response.put("status", "OK");
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } else {
@@ -130,8 +124,8 @@ public class UserController {
     }
 
     @PostMapping("/getAllLogins")
-    public List<Map<String, String>> getAllLogins() {
-        return SQLservice.getStoredLogins();
+    public List<Map<String, String>> getAllLogins(@CookieValue(value = "sessionId", required = false) String sessionId) {
+        return SQLservice.getStoredLogins(sessionId);
     }
 
 

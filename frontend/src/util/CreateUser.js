@@ -25,7 +25,6 @@ export default async function CreateUser(username, password) {
 
       } catch (error) {
         console.error("User registration failed", error);
-        alert("Could not connect to server or invalid response.");
         return -1;
     }
 

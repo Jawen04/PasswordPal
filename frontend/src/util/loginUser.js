@@ -15,7 +15,6 @@ export async function loginUser(username, password) {
     if (data.status === 'OK') {
       // Save session ID in localStorage
       localStorage.setItem('sessionId', data.sessionId);
-      console.log('Login successful! Session ID saved.');
       return true;
     } else {
       console.error('Login failed:', data.message);

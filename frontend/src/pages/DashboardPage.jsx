@@ -19,7 +19,6 @@ export default function DashBoard() {
         try {
           if(await checkActiveSession()) {
             setHasActiveSession(true)
-            console.log("Active Session now set to true!")
           }
         } catch (error) {
           console.log("Error when checking active user session: " + error)
@@ -67,9 +66,7 @@ function Content() {
       async function fetchUser() {
         try {
           const data = await getCurrentSignedInUser();
-          
           setCurrUser(data?.username)
-          console.log("username: " + data.username)
         } catch (error) {
           console.error(error)
         }

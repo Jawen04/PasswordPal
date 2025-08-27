@@ -80,7 +80,6 @@ const AddPasswordBox = () => {
   // Correct: call the hook at the top level to get the function
 
   const handleEnter = async () => {
-    console.log("FROM FRONTEND: ADDING LOGIN");
     if (service === "" || username === "" || password === "") return;
 
     const success = await useAddServicePassword({
@@ -90,14 +89,11 @@ const AddPasswordBox = () => {
     });
 
     if (success) {
-      alert("OK FROM JSX");
       // Optionally clear inputs or refresh list
       setService("");
       setUsername("");
       setPassword("");
-    } else {
-      alert("NOT OK FROM JSX");
-    }
+    } 
 
 
   };

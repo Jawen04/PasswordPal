@@ -35,11 +35,10 @@ export default function SideBar({ isOpen }) {
 
   
   const handlelogout = async (e) => {
-    console.log("Trying to log out")
+    
     try {
       if(await logoutUser()) {
         navigate("/auth/login")
-        console.log("Now redirecting")
       } else {
         <ErrorPopup message="Could not logout user" />
       }
