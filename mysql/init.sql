@@ -26,6 +26,7 @@ CREATE TABLE user_accounts (
     service_name VARCHAR(100) NOT NULL,
     login_username VARCHAR(100) NOT NULL,
     login_password VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(64) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

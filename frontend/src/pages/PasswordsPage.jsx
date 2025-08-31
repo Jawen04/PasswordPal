@@ -8,6 +8,7 @@ import { getAllStoredLogins } from "../util/getAllStoredLogins";
 import useAddServicePassword from "../util/AddServicePassword";
 import { CredentialsContext } from "../util/LoginContext";
 import { getCurrentSignedInUser } from "../util/getCurrentSignedInUser";
+import deleteServicePassword from "../util/deleteServicePassword";
 
 
 export default function PasswordsPage() {
@@ -22,23 +23,9 @@ export default function PasswordsPage() {
 }
 
 function Content() {
-  return (
-    <div className="w-full max-w-3xl px-4 ml-10 mr-10">
-      <TitleAndBtn
-        title={"Passwords"}
-        message={"Manage all your stored passwords"}
-      />
-      <AddPasswordBox />
-      <PasswordsCard />
-    </div>
-  );
-}
-
-function PasswordsCard() {
   const [credentials, setCredentials] = useState([]);
 
-
- useEffect(() => {
+  useEffect(() => {
     async function fetchCredentials() {
       const currSignedInUser = await getCurrentSignedInUser(); 
       if (currSignedInUser) {
@@ -50,6 +37,37 @@ function PasswordsCard() {
   }, []);
 
   return (
+    <div className="w-full max-w-3xl px-4 ml-10 mr-10">
+      <TitleAndBtn
+        title={"Passwords"}
+        message={"Manage all your stored passwords"}
+      />
+      <AddPasswordBox credentials={credentials} setCredentials={setCredentials} />
+      <PasswordsCard credentials={credentials} setCredentials={setCredentials} />
+    </div>
+  );
+}
+
+function PasswordsCard({ credentials, setCredentials }) {
+  const handleRemoveCredCardInstance = async (serviceName, serviceUsername, servicePassword) => {
+    const deleted = await deleteServicePassword({ serviceName, serviceUsername, servicePassword });
+    if(deleted) {
+      setCredentials(prev =>
+        prev.filter(
+          cred =>
+            !(
+              cred.serviceName === serviceName &&
+              cred.serviceUsername === serviceUsername &&
+              cred.servicePassword === servicePassword
+            )
+        )
+      );
+    } else {
+      console.log("Could not delete");
+    }
+  };
+
+  return (
     <Card className="p-6 max-w-4xl mx-auto w-full">
       <p className="text-black font-bold text-xl">All Passwords</p>
       <p className="text-gray-400">View, edit, and manage your saved passwords</p>
@@ -57,9 +75,10 @@ function PasswordsCard() {
         {credentials.map((credObj, index) => (
           <CredentialsCard
             key={index}
-            name={credObj.service}
-            email={credObj.username}
-            password={credObj.password}
+            name={credObj.serviceName}
+            email={credObj.serviceUsername}
+            password={credObj.servicePassword}
+            onDelete={() => handleRemoveCredCardInstance(credObj.serviceName, credObj.serviceUsername, credObj.servicePassword)}
           />
         ))}
       </div>
@@ -67,17 +86,10 @@ function PasswordsCard() {
   );
 }
 
-const AddPasswordBox = () => {
+const AddPasswordBox = ({ credentials, setCredentials }) => {
   const [service, setService] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { currSignedInUser } = useContext(CredentialsContext); 
-
-
-  const [logins, setLogins] = useState([])
-
-
-  // Correct: call the hook at the top level to get the function
 
   const handleEnter = async () => {
     if (service === "" || username === "" || password === "") return;
@@ -89,13 +101,15 @@ const AddPasswordBox = () => {
     });
 
     if (success) {
-      // Optionally clear inputs or refresh list
+      setCredentials(prev => [
+        ...prev,
+        { serviceName: service, serviceUsername: username, servicePassword: password }
+      ]);
+
       setService("");
       setUsername("");
       setPassword("");
-    } 
-
-
+    }
   };
 
   

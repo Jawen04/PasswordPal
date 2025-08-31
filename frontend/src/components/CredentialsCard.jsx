@@ -3,11 +3,20 @@
 
 
 import { useEffect, useRef, useState } from 'react';
-import { Eye, Copy } from 'lucide-react';
+import { Eye, EyeOff, Copy, Trash } from 'lucide-react';
 
-export default function CredentialsCard({ name, email, password }) {
+export default function CredentialsCard({ name, email, password, onDelete }) {
   const [showPassword, setShowPassword] = useState(false);
   const containerRef = useRef(null);
+  const [passwordVisible, setPasswordVisible] = useState(false)
+
+  const handleEyeToggle = () => {
+    setShowPassword((prev) => !prev)
+    setPasswordVisible(!passwordVisible)
+  }
+
+
+
 
   // Hide password when clicking outside the component
   useEffect(() => {
@@ -47,11 +56,20 @@ export default function CredentialsCard({ name, email, password }) {
             </p>
           </div>
 
-          <button onClick={() => setShowPassword((prev) => !prev)} className="text-black shrink-0 hover:cursor-pointer  rounded-sm p-1 hover:bg-gray-200">
-            <Eye size={20} />
+          <button onClick={() => handleEyeToggle() } className="text-black shrink-0 hover:cursor-pointer  rounded-sm p-1 hover:bg-gray-200">
+            {passwordVisible ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
-          <button className="text-black shrink-0 hover:cursor-pointer rounded-sm p-1 hover:bg-gray-200">
+          <button 
+            className="text-black shrink-0 hover:cursor-pointer rounded-sm p-1 hover:bg-gray-200"
+            onClick={() => navigator.clipboard.writeText(password)}
+            >
             <Copy size={20} />
+          </button>
+          <button 
+            className="text-black shrink-0 hover:cursor-pointer rounded-sm p-1 hover:bg-gray-200"
+            onClick={onDelete}
+            >
+            <Trash size={20} />
           </button>
         </div>
       </div>

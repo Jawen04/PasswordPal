@@ -15,12 +15,13 @@ export async function getAllStoredLogins() {
     const data = await response.json();
 
     const list = data.map(entry => ({
-      service: entry.service,
-      username: entry.username,
-      password: entry.password
+      serviceName: entry.serviceName,
+      serviceUsername: entry.serviceUsername,
+      servicePassword: entry.servicePassword
     }));
 
 
+    
     return list;
 
   } catch (error) {
