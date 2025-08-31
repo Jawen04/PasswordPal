@@ -123,6 +123,22 @@ public class UserController {
         }
     }
 
+    @PostMapping("/removeLogin")
+    public ResponseEntity<Map<String, String>> removeLogin(@CookieValue(value = "sessionId", required = false) String sessionId, @RequestBody ServiceLoginDTO serviceLoginDTO) {
+        System.out.println("received dto: " + serviceLoginDTO.getServiceName() + " " + serviceLoginDTO.getServiceUsername() + " " + serviceLoginDTO.getServicePassword());
+        Map<String, String> response = new HashMap<>();
+        if (SQLservice.removeStoredLogin(sessionId, serviceLoginDTO.getServiceName(), serviceLoginDTO.getServiceUsername(), serviceLoginDTO.getServicePassword())) {
+            response.put("status", "OK");
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } else {
+            response.put("status", "NOT_OK");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+
+
+
+    } 
+
     @PostMapping("/getAllLogins")
     public List<Map<String, String>> getAllLogins(@CookieValue(value = "sessionId", required = false) String sessionId) {
         return SQLservice.getStoredLogins(sessionId);

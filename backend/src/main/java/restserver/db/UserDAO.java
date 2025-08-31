@@ -25,6 +25,8 @@ import restserver.config.AESKeyProvider;
 import restserver.entity.User;
 import restserver.util.AESUtils;
 
+import restserver.util.HashUtils;
+
 @Repository
 public class UserDAO {
     private static final Logger logger = LoggerFactory.getLogger(UserDAO.class);
@@ -337,26 +339,71 @@ public class UserDAO {
             return false;
         }
 
-        String sql = "INSERT INTO user_accounts (user_id, service_name, login_username, login_password) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO user_accounts (user_id, service_name, login_username, login_password, password_hash) VALUES (?, ?, ?, ?, ?)";
+        String passwordHash = HashUtils.SHA256(loginPassword);
 
         try (Connection conn = dataSource.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
             stmt.setString(2, serviceName);
             stmt.setString(3, loginUsername);
-                try {
-                    stmt.setString(4, AESUtils.encrypt(loginPassword, getSecretKey()));
-                } catch (Exception e) {
-                    logger.warn("Could not encrypt login password! " + e.getMessage());
-                    return false;
-                }
+            try {
+                stmt.setString(4, AESUtils.encrypt(loginPassword, getSecretKey()));
+            } catch (Exception e) {
+                logger.warn("Could not encrypt login password! " + e.getMessage());
+                return false;
+            }
+            stmt.setString(5, passwordHash);
 
-                stmt.executeUpdate();
-                logger.info("Stored login added for user: " + ownerUsername + ", service: " + serviceName);
-                return true;
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected == 0) {
+                logger.warn("Unable to add new service login for user: " + ownerUsername);
+                return false;
+            } 
+
+            logger.info("Stored login added for user: " + ownerUsername + ", service: " + serviceName);
+            return true;
         } catch (SQLException e) {
             logger.warn("Error adding stored login: " + e.getMessage());
             return false;
         }
+    }
+
+
+    public boolean removeStoredLogin(String sessionId, String serviceName, String serviceUsername, String servicePassword) {
+
+        System.out.println("Trying to delete user with password: " + servicePassword);
+        int userId = getUserIdForSessionId(sessionId);
+        String ownerUsername = getUsernameById(userId);
+
+        if(userId == -1) {
+            logger.warn("User not found: " + ownerUsername);
+            return false;
+        }
+
+
+        String sql = "DELETE FROM user_accounts WHERE user_id = ? AND service_name = ? AND login_username = ? AND password_hash = ?";
+        String passwordHash = HashUtils.SHA256(servicePassword);
+
+        try (Connection conn = dataSource.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            stmt.setString(2, serviceName);
+            stmt.setString(3, serviceUsername);
+            stmt.setString(4, passwordHash);
+
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected == 0) {
+                logger.warn("No stored login found to remove for " + ownerUsername);
+                return false;
+            } 
+            logger.info("removed stored login for " + ownerUsername + ", service: " + serviceName);
+            return true;
+        } catch (SQLException e) {
+            logger.warn("Error removing stored login: " + e.getMessage());
+            return false;
+        }
+
+
+
     }
 
     
@@ -382,10 +429,10 @@ public class UserDAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Map<String, String> loginEntry = new HashMap<>();
-                    loginEntry.put("service",   rs.getString("service_name"));
-                    loginEntry.put("username", rs.getString("login_username"));
+                    loginEntry.put("serviceName",   rs.getString("service_name"));
+                    loginEntry.put("serviceUsername", rs.getString("login_username"));
                     try {
-                        loginEntry.put("password", AESUtils.decrypt(rs.getString("login_password"), getSecretKey())); // plaintext for now
+                        loginEntry.put("servicePassword", AESUtils.decrypt(rs.getString("login_password"), getSecretKey())); // plaintext for now
                     } catch (Exception e) {
                         logger.warn("Could not decrypt login password! " + e.getMessage());
                     }
