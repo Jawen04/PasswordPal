@@ -3,9 +3,11 @@ package restserver.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.origin.SystemEnvironmentOrigin;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import ch.qos.logback.classic.Logger;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import restserver.dto.ServiceLoginDTO;
@@ -48,14 +50,20 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PostMapping("/remove")
-    public ResponseEntity<Map<String, String>> removeUser(@RequestBody UserDTO userDTO) {
+    @PostMapping("/removeUser")
+    public ResponseEntity<Map<String, String>> removeUser(@RequestBody Map<String, String> payload) {
         Map<String, String> response = new HashMap<>();
-        if (userDTO.getUsername().trim().isEmpty() || userDTO.getPassword().trim().isEmpty()) {
+
+        if(!payload.get("password").equals(System.getenv("ADMIN_DASHBOARD_PASSWORD"))) {
+            System.out.println("Unauthorized admin key!");
+            response.put("status", "UNAUTHORIZED");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        if (payload.get("username").trim().isEmpty()) {
             response.put("status", "NOT_OK");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
-        if (SQLservice.removeUser(userDTO.getUsername())) {
+        if (SQLservice.removeUser(payload.get("username"))) {
             response.put("status", "OK");
             return ResponseEntity.ok(response);
         }
@@ -144,6 +152,19 @@ public class UserController {
         return SQLservice.getStoredLogins(sessionId);
     }
 
+
+    @PostMapping("/getAllUsers")
+    public List<Map<String, String>> getAllUsers(@RequestBody Map<String, String> payload) {
+        System.out.println("RUN!");
+        return SQLservice.getAllUsers(payload.get("key"));
+    }
+
+
+    @PostMapping("/getLoginsForUsername")
+    public List<Map<String, String>> getLoginsForUsername(@RequestBody Map<String,String> payload) {
+        String username = payload.get("username");
+        return SQLservice.getLoginsForUsername(username);
+    }
 
     
 

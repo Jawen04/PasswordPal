@@ -460,46 +460,42 @@ public class UserDAO {
             return false;
         }
 
-        String sql = "DELETE FROM users WHERE username = ?";
+        int userId = getUserIdByUsername(username);
+        if (userId == -1) {
+            logger.warn("No user found with username: " + username);
+            return false;
+        }
+
+        String deleteLogins = "DELETE FROM user_accounts WHERE user_id = ?";
+        String deleteSessions = "DELETE FROM user_sessions WHERE user_id = ?";
+        String deleteUser = "DELETE FROM users WHERE id = ?";
 
         try (Connection conn = dataSource.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, username);
-            int rowsAffected = stmt.executeUpdate();
+            PreparedStatement stmtLogins = conn.prepareStatement(deleteLogins);
+            PreparedStatement stmtSessions = conn.prepareStatement(deleteSessions);
+            PreparedStatement stmtUser = conn.prepareStatement(deleteUser)) {
+
+            stmtLogins.setInt(1, userId);
+            stmtLogins.executeUpdate();
+
+            stmtSessions.setInt(1, userId);
+            stmtSessions.executeUpdate();
+
+            stmtUser.setInt(1, userId);
+            int rowsAffected = stmtUser.executeUpdate();
+
             if (rowsAffected > 0) {
-                logger.info("User " + username + " has been removed.");
+                logger.info("User " + username + " has been fully removed.");
                 return true;
             } else {
-                logger.warn("No user found with username: " + username);
+                logger.warn("Failed to delete user " + username);
             }
+
         } catch (SQLException e) {
-            logger.warn("Error: " + e.getMessage());
+            logger.warn("Error removing user: " + e.getMessage());
         }
 
         return false;
-    }
-
-    public List<User> getAllUsers() {
-        List<User> userList = new ArrayList<>();
-        String sql = "SELECT * FROM users";
-
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                User user = new User(
-                    rs.getInt("id"),
-                    rs.getString("username"),
-                    rs.getString("password")
-                );
-                userList.add(user);
-            }
-        } catch (SQLException e) {
-            logger.warn("Error: " + e.getMessage());
-        }
-
-        return userList;
     }
 
 
@@ -515,11 +511,74 @@ public class UserDAO {
     } catch (SQLException e) {
         logger.warn("Error: " + e.getMessage());
     }
-    return false;
-}
+        return false;
+    }
+
+
+    public List<Map<String, String>> getAllUsers(String key) {
+        List<Map<String, String>> userList = new ArrayList<>();
+
+        if(!key.equals(System.getenv("ADMIN_DASHBOARD_PASSWORD"))) {
+            System.out.println(System.getenv("ADMIN_DASHBOARD_PASSWORD"));
+            logger.warn("Authentication failed!");
+            return userList;
+        }
+
+        String sql = "SELECT * FROM users";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Map<String, String> user = new HashMap<>();
+                user.put("username", rs.getString("username"));
+                user.put("password", rs.getString("password"));
+                userList.add(user);
+            }
+        } catch (SQLException e) {
+            logger.warn("Error: " + e.getMessage());
+        }
+
+        return userList;
+    }
 
 
 
+
+    public List<Map<String, String>> getLoginsForUsername(String username) {
+        List<Map<String, String>> logins = new ArrayList<Map<String,String>>();
+        int userId = getUserIdByUsername(username);
+        if(userId == -1) {
+            logger.warn("Could not find username: " + username);
+            return logins;
+        }
+
+
+        String sql = "SELECT service_name, login_username, login_password FROM user_accounts WHERE user_id = ?";
+
+        try (Connection conn = dataSource.getConnection(); 
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setInt(1, userId);
+                try(ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        Map<String, String> loginEntry = new HashMap<>();
+                        loginEntry.put("serviceName",   rs.getString("service_name"));
+                        loginEntry.put("serviceUsername", rs.getString("login_username"));
+                        try {
+                            loginEntry.put("servicePassword", AESUtils.decrypt(rs.getString("login_password"), getSecretKey())); // plaintext for now
+                        } catch (Exception e) {
+                            logger.warn("Could not decrypt login password! " + e.getMessage());
+                        }
+                        logins.add(loginEntry);
+                    }
+                }
+        } catch (SQLException e) {
+            logger.warn("Error: " + e.getMessage());
+        }
+
+        return logins;
+    }
 
 
     

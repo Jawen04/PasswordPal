@@ -18,11 +18,14 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/usersDB?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      - SPRING_DATASOURCE_USERNAME=jawen
-      - SPRING_DATASOURCE_PASSWORD=pass
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
       - SPRING_DATASOURCE_HIKARI_MAXIMUM-POOL-SIZE=5
-      - SPRING_DATASOURCE_HIKARI_CONNECTION-TIMEOUT=30000
+      - SPRING_DATASOURCE_HIKARI_CONNECTION-TIMEOUT=30000 
+
+      - ADMIN_DASHBOARD_PASSWORD=${ADMIN_DASHBOARD_PASSWORD}
+
     ports:
       - "8080:8080"
     networks:
@@ -31,10 +34,10 @@ services:
   mysql:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_DATABASE: usersDB
-      MYSQL_USER: jawen
-      MYSQL_PASSWORD: pass
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
       - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql

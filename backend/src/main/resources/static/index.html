@@ -1,39 +1,242 @@
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <title>Backend for PasswordPal</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>PasswordPal Admin</title>
+  <link rel="stylesheet" href="style.css" />
   <style>
-    #message {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 1.5em;
-      font-weight: bold;
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f7f9fb;
+    }
+
+    header {
+      background: #2c3e50;
+      color: white;
+      padding: 1rem 2rem;
       text-align: center;
+      font-size: 1.5rem;
+    }
+
+    main {
+      padding: 2rem;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    h2 {
+      margin-bottom: 1rem;
+      color: #34495e;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+    }
+
+    th {
+      background: #34495e;
+      color: white;
+      font-weight: bold;
+    }
+
+    tr:nth-child(even) {
+      background: #f2f2f2;
+    }
+
+    tr.expandable {
+      background: #ecf0f1;
+    }
+
+    .loading, .error {
+      text-align: center;
+      padding: 2rem;
+      font-size: 1.2rem;
+      color: #555;
+    }
+
+    .btn-delete {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .btn-delete:hover {
+      background: #c0392b;
+    }
+
+    .expand-toggle {
+      cursor: pointer;
+      color: #2980b9;
+      font-weight: bold;
     }
   </style>
 </head>
-
 <body>
-  <div id="message">Loading...</div>
+  <header>PasswordPal Admin Dashboard</header>
+  <main>
+    <h2>Currently Registered Users</h2>
+    <div id="status" class="loading">Loading user data...</div>
+    <table id="usersTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Password</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="usersTableBody">
+        <!-- rows injected here -->
+      </tbody>
+    </table>
+  </main>
 
   <script>
-    fetch("http://localhost:8080/auth/testSQL")
-      .then(response => {
+    // TODO: find a more secure way, maybe via api calls to the backend or (harder) a login page
+    const ADMIN_KEY = "pass"; // replace with your environment/admin key
+
+    async function loadUsers() {
+      try {
+        const response = await fetch("http://localhost:8080/api/user/getAllUsers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: ADMIN_KEY })
+        });
+
         if (!response.ok) throw new Error("Network response was not ok");
-        return response.json();
-      })
-      .then(data => {
-        document.getElementById("message").textContent = "Data loaded successfully.";
-        // You can optionally hide the message or replace it with other content here
-      })
-      .catch(error => {
+        const data = await response.json();
+
+        const tableBody = document.getElementById("usersTableBody");
+        tableBody.innerHTML = "";
+
+        data.forEach(user => {
+          const row = document.createElement("tr");
+
+          // Username clickable for expanding logins
+          const usernameCell = document.createElement("td");
+          usernameCell.textContent = user.username || "-";
+          usernameCell.classList.add("expand-toggle");
+          usernameCell.addEventListener("click", () => toggleUserLogins(row, user.username));
+          row.appendChild(usernameCell);
+
+          // Password cell
+          const passwordCell = document.createElement("td");
+          passwordCell.textContent = user.password || "-";
+          row.appendChild(passwordCell);
+
+          // Actions cell with delete button
+          const actionsCell = document.createElement("td");
+          const deleteBtn = document.createElement("button");
+          deleteBtn.textContent = "Delete";
+          deleteBtn.classList.add("btn-delete");
+          deleteBtn.addEventListener("click", () => deleteUser(user.username));
+          actionsCell.appendChild(deleteBtn);
+          row.appendChild(actionsCell);
+
+          tableBody.appendChild(row);
+        });
+
+        document.getElementById("status").style.display = "none";
+        document.getElementById("usersTable").style.display = "table";
+
+      } catch (error) {
         console.error("Error fetching data:", error);
-        document.getElementById("message").textContent = "Failed to load data.";
-      });
+        const statusDiv = document.getElementById("status");
+        statusDiv.textContent = "❌ Failed to load data.";
+        statusDiv.className = "error";
+      }
+    }
+
+    async function toggleUserLogins(userRow, username) {
+      // If already expanded, remove extra rows
+      if (userRow.nextSibling && userRow.nextSibling.classList.contains("expandable")) {
+        let nextRow = userRow.nextSibling;
+        while (nextRow && nextRow.classList.contains("expandable")) {
+          const temp = nextRow.nextSibling;
+          nextRow.remove();
+          nextRow = temp;
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:8080/api/user/getAllLoginsForUser`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username })
+        });
+        if (!response.ok) throw new Error("Network response was not ok");
+        const logins = await response.json();
+
+        logins.forEach(login => {
+          const row = document.createElement("tr");
+          row.classList.add("expandable");
+
+          const serviceCell = document.createElement("td");
+          serviceCell.textContent = login.serviceName || "-";
+          serviceCell.colSpan = 1;
+          row.appendChild(serviceCell);
+
+          const userCell = document.createElement("td");
+          userCell.textContent = login.serviceUsername || "-";
+          row.appendChild(userCell);
+
+          const passCell = document.createElement("td");
+          passCell.textContent = login.servicePassword || "-";
+          row.appendChild(passCell);
+
+          userRow.parentNode.insertBefore(row, userRow.nextSibling);
+        });
+
+      } catch (error) {
+        console.error("Error fetching logins:", error);
+        alert("Failed to load user logins.");
+      }
+    }
+
+    async function deleteUser(username) {
+      if(username === "admin") {
+        alert("Cannot remove user admin")
+        return;
+      }
+      if (!confirm(`Are you sure you want to delete user "${username}"?`)) return;
+
+      try {
+        const response = await fetch("http://localhost:8080/api/user/removeUser", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password: ADMIN_KEY })
+        });
+
+        const data = await response.json();
+        if (data.status === "OK") {
+          alert(`User "${username}" removed successfully.`);
+          loadUsers(); // refresh table
+        } else {
+          alert(`Failed to remove user: ${data.status}`);
+        }
+      } catch (error) {
+        console.error("Error deleting user:", error);
+        alert("Error deleting user.");
+      }
+    }
+
+    // Initial load
+    loadUsers();
   </script>
 </body>
-
 </html>
