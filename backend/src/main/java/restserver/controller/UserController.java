@@ -1,19 +1,14 @@
 package restserver.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.origin.SystemEnvironmentOrigin;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import ch.qos.logback.classic.Logger;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
 import restserver.dto.ServiceLoginDTO;
 import restserver.dto.UserDTO;
 import restserver.db.UserDAO;
-import restserver.entity.User;
+
 
 import java.util.HashMap;
 import java.util.List;
@@ -155,7 +150,6 @@ public class UserController {
 
     @PostMapping("/getAllUsers")
     public List<Map<String, String>> getAllUsers(@RequestBody Map<String, String> payload) {
-        System.out.println("RUN!");
         return SQLservice.getAllUsers(payload.get("key"));
     }
 
@@ -164,6 +158,34 @@ public class UserController {
     public List<Map<String, String>> getLoginsForUsername(@RequestBody Map<String,String> payload) {
         String username = payload.get("username");
         return SQLservice.getLoginsForUsername(username);
+    }
+
+
+    @PostMapping("/changeServiceLogin")
+    public ResponseEntity<Map<String, String>> changeServiceLogin(@CookieValue(value = "sessionId", required = false) String sessionId, @RequestBody Map<String, String> payload) {
+        Map<String, String> response = new HashMap<>();
+
+        if(payload.isEmpty()) {
+            response.put("status", "NOT_OK");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);   
+        }
+        
+        if(SQLservice.changeServiceLogin(
+        sessionId, 
+        payload.get("oldServiceName"), 
+        payload.get("oldUsername"), 
+        payload.get("oldServicePassword"), 
+        payload.get("newServiceName"), 
+        payload.get("newUsername"), 
+        payload.get("newServicePassword"))) {
+            response.put("status", "OK");
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } else {
+            response.put("status", "NOT_GRANTED");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+
     }
 
     

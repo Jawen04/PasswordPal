@@ -12,11 +12,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.util.UUID;
 
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,15 +23,12 @@ import restserver.config.AESKeyProvider;
 import restserver.entity.User;
 import restserver.util.AESUtils;
 
-import restserver.util.HashUtils;
-
 @Repository
 public class UserDAO {
     private static final Logger logger = LoggerFactory.getLogger(UserDAO.class);
     private final DataSource dataSource;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    // key stored securely
     @Autowired
     private AESKeyProvider keyProvider;
 
@@ -96,7 +91,7 @@ public class UserDAO {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getBoolean(1); // returns true if session exists
+                    return rs.getBoolean(1); 
                 } else {
                     return false;
                 }
@@ -149,7 +144,7 @@ public class UserDAO {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getString("session_id"); // return the found sessionId
+                    return rs.getString("session_id");
                 }
             }
 
@@ -216,14 +211,13 @@ public class UserDAO {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    String hashedPassword = rs.getString("password");
-                    return passwordEncoder.matches(enteredPassword, hashedPassword);
+                    return passwordEncoder.matches(enteredPassword, rs.getString("password"));
                 } else {
                     return false;
                 }
             }
 
-        } catch (SQLException e) {
+        } catch (SQLException e ) {
             logger.warn("SQL Error during user validation: " + e.getMessage());
         }
 
@@ -250,9 +244,16 @@ public class UserDAO {
             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, username);
             pstmt.setString(2, passwordEncoder.encode(plainPassword));
-            pstmt.executeUpdate();
-            logger.info("User: " + username + " registered successfully.");
-            return 0;
+
+            
+            if(pstmt.executeUpdate() > 0) {
+                logger.info("User: " + username + " registered successfully.");
+                return 0;
+            } else {
+                logger.info("Could not register user");
+                return -1;
+            }
+            
         } catch (SQLException e) {
             logger.warn("SQL Error during user registration: " + e.getMessage());
             return -1;
@@ -339,8 +340,7 @@ public class UserDAO {
             return false;
         }
 
-        String sql = "INSERT INTO user_accounts (user_id, service_name, login_username, login_password, password_hash) VALUES (?, ?, ?, ?, ?)";
-        String passwordHash = HashUtils.SHA256(loginPassword);
+        String sql = "INSERT INTO user_accounts (user_id, service_name, login_username, login_password) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = dataSource.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
@@ -352,7 +352,6 @@ public class UserDAO {
                 logger.warn("Could not encrypt login password! " + e.getMessage());
                 return false;
             }
-            stmt.setString(5, passwordHash);
 
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected == 0) {
@@ -370,41 +369,59 @@ public class UserDAO {
 
 
     public boolean removeStoredLogin(String sessionId, String serviceName, String serviceUsername, String servicePassword) {
+    int userId = getUserIdForSessionId(sessionId);
+    String ownerUsername = getUsernameById(userId);
 
-        System.out.println("Trying to delete user with password: " + servicePassword);
-        int userId = getUserIdForSessionId(sessionId);
-        String ownerUsername = getUsernameById(userId);
-
-        if(userId == -1) {
-            logger.warn("User not found: " + ownerUsername);
-            return false;
-        }
-
-
-        String sql = "DELETE FROM user_accounts WHERE user_id = ? AND service_name = ? AND login_username = ? AND password_hash = ?";
-        String passwordHash = HashUtils.SHA256(servicePassword);
-
-        try (Connection conn = dataSource.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, userId);
-            stmt.setString(2, serviceName);
-            stmt.setString(3, serviceUsername);
-            stmt.setString(4, passwordHash);
-
-            int rowsAffected = stmt.executeUpdate();
-            if (rowsAffected == 0) {
-                logger.warn("No stored login found to remove for " + ownerUsername);
-                return false;
-            } 
-            logger.info("removed stored login for " + ownerUsername + ", service: " + serviceName);
-            return true;
-        } catch (SQLException e) {
-            logger.warn("Error removing stored login: " + e.getMessage());
-            return false;
-        }
-
-
-
+    if (userId == -1) {
+        logger.warn("User not found: " + ownerUsername);
+        return false;
     }
+
+    String selectSql = "SELECT id, login_password FROM user_accounts WHERE user_id = ? AND service_name = ? AND login_username = ?";
+
+    try (Connection conn = dataSource.getConnection();
+         PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+
+        selectStmt.setInt(1, userId);
+        selectStmt.setString(2, serviceName);
+        selectStmt.setString(3, serviceUsername);
+
+        try (ResultSet rs = selectStmt.executeQuery()) {
+            while (rs.next()) {
+                int accountId = rs.getInt("id");
+                String storedEncrypted = rs.getString("login_password");
+
+                String decryptedPassword;
+                try {
+                    decryptedPassword = AESUtils.decrypt(storedEncrypted, getSecretKey());
+                } catch (Exception e) {
+                    logger.warn("Error decrypting password for deletion: " + e.getMessage());
+                    continue;
+                }
+
+                if (decryptedPassword.equals(servicePassword)) {
+                    String deleteSql = "DELETE FROM user_accounts WHERE id = ?";
+                    try (PreparedStatement deleteStmt = conn.prepareStatement(deleteSql)) {
+                        deleteStmt.setInt(1, accountId);
+                        int rowsAffected = deleteStmt.executeUpdate();
+                        if (rowsAffected > 0) {
+                            logger.info("Removed stored login for " + ownerUsername + ", service: " + serviceName);
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        logger.warn("No stored login found to remove for " + ownerUsername);
+        return false;
+
+    } catch (SQLException e) {
+        logger.warn("SQL Error removing stored login: " + e.getMessage());
+        return false;
+    }
+}
+
 
     
 
@@ -579,6 +596,70 @@ public class UserDAO {
 
         return logins;
     }
+
+
+
+    
+
+
+    public boolean changeServiceLogin(String sessionId, String oldServiceName, String oldUsername, String oldServicePassword, String newServiceName, String newUsername, String newServicePassword) {
+    int userId = getUserIdForSessionId(sessionId);
+    if (userId == -1) {
+        logger.warn("Could not find user for session: " + sessionId);
+        return false;
+    }
+
+    String selectSql = "SELECT id, login_password FROM user_accounts WHERE user_id = ? AND service_name = ? AND login_username = ?";
+
+    try (Connection conn = dataSource.getConnection();
+         PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+
+        selectStmt.setInt(1, userId);
+        selectStmt.setString(2, oldServiceName);
+        selectStmt.setString(3, oldUsername);
+
+        try (ResultSet rs = selectStmt.executeQuery()) {
+            while (rs.next()) {
+                int accountId = rs.getInt("id");
+                String storedEncrypted = rs.getString("login_password");
+
+                String decryptedPassword;
+                try {
+                    decryptedPassword = AESUtils.decrypt(storedEncrypted, getSecretKey());
+                } catch (Exception e) {
+                    logger.warn("Error decrypting old service password: " + e.getMessage());
+                    continue; 
+                }
+
+                if (decryptedPassword.equals(oldServicePassword)) {
+                    String updateSql = "UPDATE user_accounts SET service_name = ?, login_username = ?, login_password = ? WHERE id = ?";
+                    try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                        updateStmt.setString(1, newServiceName);
+                        updateStmt.setString(2, newUsername);
+                        updateStmt.setString(3, AESUtils.encrypt(newServicePassword, getSecretKey()));
+                        updateStmt.setInt(4, accountId);
+
+                        int rowsAffected = updateStmt.executeUpdate();
+                        if (rowsAffected > 0) {
+                            logger.info("Updated service login for user_id " + userId + ", service: " + oldServiceName);
+                            return true;
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Error encrypting new service password: " + e.getMessage());
+                        return false;
+                    }
+                }
+            }
+        }
+
+        logger.warn("No matching service login found for user_id " + userId);
+        return false;
+
+    } catch (SQLException e) {
+        logger.warn("SQL Error during service login update: " + e.getMessage());
+        return false;
+    }
+}
 
 
     

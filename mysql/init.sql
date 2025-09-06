@@ -8,7 +8,7 @@ SELECT 'init script ran';
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL
+    password VARCHAR(255) NOT NULL -- hashed using BCrypt
 );
 
 CREATE TABLE user_sessions (
@@ -25,8 +25,7 @@ CREATE TABLE user_accounts (
     user_id INT NOT NULL,
     service_name VARCHAR(100) NOT NULL,
     login_username VARCHAR(100) NOT NULL,
-    login_password VARCHAR(255) NOT NULL,
-    password_hash VARCHAR(64) NOT NULL,
+    login_password VARCHAR(255) NOT NULL, -- hashed using AESUtils
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
