@@ -6,6 +6,8 @@ import Card from '../components/Card';
 import Banner from '../components/Banner';
 import { getCurrentSignedInUser } from '../util/getCurrentSignedInUser';
 import { checkActiveSession } from '../util/checkActiveSession';
+import { getAllStoredLogins } from '../util/getAllStoredLogins';
+import { getPasswordTypes } from '../util/getPasswordTypes';
 
 
 
@@ -62,6 +64,10 @@ export default function DashBoard() {
 function Content() {
     const [currUser, setCurrUser] = useState("");
 
+    
+
+
+
     useEffect(() => {
       async function fetchUser() {
         try {
@@ -73,6 +79,11 @@ function Content() {
       }
       fetchUser()
     }, [])
+
+    
+
+
+
     return (
         <div className='w-full max-w-3xl px-4 ml-10 mr-10'>
           <TitleAndBtn  title={`Welcome back ${currUser ?? ""}`} message="Manage your passwords and account security" />            
@@ -83,12 +94,38 @@ function Content() {
 }
 
 function PasswordHealthCard() {
+  const [nbrTotalPasswords, setNbrTotalPasswords] = useState(0);
+  const [nbrStrongPasswords, setNbrStrongPasswords] = useState(0);
+  const [nbrModeratePasswords, setNbrModeratePasswords] = useState(0);
+  const [nbrWeakPasswords, setNbrWeakPasswords] = useState(0);
+  const [nbrReusedPassword, setNbrReusedPassword] = useState(0);
+
+  const [securityScore, setSecurityScore] = useState(0)
+
+  useEffect(() => {
+      async function updateValues() {
+        try {
+          const passwordsList = await getPasswordTypes()
+
+          setNbrTotalPasswords(passwordsList.totalPasswords)
+          setNbrStrongPasswords(passwordsList.strongPasswords)
+          setNbrModeratePasswords(passwordsList.moderatePasswords)
+          setNbrWeakPasswords(passwordsList.weakPasswords)
+          setNbrReusedPassword(passwordsList.reusedPasswords)
+
+          setSecurityScore(passwordsList.securityScore)
+
+        } catch (error) {}
+      }
+      updateValues();
+    }, [])
+
   const passwordTypes = [
-    { type: "Total Passwords", value: null, color: "text-black" },
-    { type: "Strong Passwords", value: null, color: "text-green-500" },
-    { type: "Moderate Passwords", value: null, color: "text-orange-500" },
-    { type: "Weak Passwords", value: null, color: "text-red-500" },
-    { type: "Reused Passwords", value: null, color: "text-red-500" },
+    { type: "Total Passwords", value: nbrTotalPasswords, color: "text-black" },
+    { type: "Strong Passwords", value: nbrStrongPasswords, color: "text-green-500" },
+    { type: "Moderate Passwords", value: nbrModeratePasswords, color: "text-orange-500" },
+    { type: "Weak Passwords", value: nbrWeakPasswords, color: "text-red-500" },
+    { type: "Reused Passwords", value: nbrReusedPassword, color: "text-red-500" },
   ];
 
   return (
@@ -121,7 +158,7 @@ function PasswordHealthCard() {
 
         <div className="flex flex-col border border-gray-200 rounded-lg p-6 flex-none w-full md:w-1/3 items-center text-center text-white">
           <p className="text-black text-lg mb-4">Security score</p>
-          <p className="text-5xl text-green-400 font-extrabold mb-4">75%</p>
+          <p className="text-5xl text-green-400 font-extrabold mb-4">{securityScore}%</p>
           <p className="text-gray-400 text-sm">Excellent security score!</p>
         </div>
       </div>
